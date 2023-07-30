@@ -8,8 +8,11 @@ import (
 )
 
 func main() {
-	hand := handlers.NewUpdateHandler(storages.NewMemStorage())
+	hand := handlers.NewMetricHandler(storages.NewMemStorage())
 	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", advicerrors.Middleware(hand.UpdateMetric))
-	http.ListenAndServe(":8080", mux)
+	mux.HandleFunc("/update/", advicerrors.Middleware(hand.MetricAdd))
+	err := http.ListenAndServe(":8080", mux)
+	if err != nil {
+		panic(err)
+	}
 }
