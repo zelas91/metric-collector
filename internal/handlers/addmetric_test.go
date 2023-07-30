@@ -48,7 +48,7 @@ func TestAddMetric_MetricAdd(t *testing.T) {
 		{
 			name:          "status method not allowed #4",
 			updateHandler: MetricHandler{mem: storages.NewMemStorage()},
-			want:          want{code: 405, body: "status method not allowed"},
+			want:          want{code: 405, body: "method not allowed"},
 			url:           "/update/counter/someMetric/527",
 			method:        http.MethodGet,
 		},
@@ -61,12 +61,12 @@ func TestAddMetric_MetricAdd(t *testing.T) {
 			h := http.HandlerFunc(advicerrors.Middleware(test.updateHandler.MetricAdd))
 			h(w, request)
 			read, err := io.ReadAll(w.Result().Body)
-			require.NoError(t, err)
+			require.NoError(t, err, "Body read error")
 			err = w.Result().Body.Close()
-			require.NoError(t, err)
+			require.NoError(t, err, "Body close error")
 			body := strings.TrimSpace(string(read))
-			assert.Equal(t, test.want.code, w.Result().StatusCode)
-			assert.Equal(t, test.want.body, body)
+			assert.Equal(t, test.want.code, w.Result().StatusCode, "status code not as expected")
+			assert.Equal(t, test.want.body, body, "status code not as expected")
 		})
 	}
 

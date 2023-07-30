@@ -2,14 +2,7 @@ package advicerrors
 
 import "net/http"
 
-var (
-	ErrNotFound         = NewAppError(nil, "not found", http.StatusNotFound)
-	ErrBadRequest       = NewAppError(nil, "bad request ", http.StatusBadRequest)
-	ErrMethodNotAllowed = NewAppError(nil, "status method not allowed", http.StatusMethodNotAllowed)
-)
-
 type AppError struct {
-	err     error
 	message string
 	code    int
 }
@@ -17,6 +10,18 @@ type AppError struct {
 func (e *AppError) Error() string {
 	return e.message
 }
-func NewAppError(err error, message string, code int) *AppError {
-	return &AppError{err: err, message: message, code: code}
+func NewAppError(message string, code int) *AppError {
+	return &AppError{message: message, code: code}
+}
+
+func NewErrNotFound(message string) *AppError {
+	return NewAppError(message, http.StatusNotFound)
+}
+
+func NewErrBadRequest(message string) *AppError {
+	return NewAppError(message, http.StatusBadRequest)
+}
+
+func NewErrMethodNotAllowed(message string) *AppError {
+	return NewAppError(message, http.StatusMethodNotAllowed)
 }

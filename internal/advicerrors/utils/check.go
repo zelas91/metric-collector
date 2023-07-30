@@ -21,20 +21,20 @@ func isType(mType string) bool {
 	return true
 
 }
-func CheckUpdateMetric(method string, parts []string) error {
+func CheckUpdateMetric(method string, parts []string) *advicerrors.AppError {
 	if method != http.MethodPost {
-		return advicerrors.ErrMethodNotAllowed
+		return advicerrors.NewErrMethodNotAllowed("method not allowed")
 	}
 	if len(parts) < 5 {
-		return advicerrors.ErrNotFound
+		return advicerrors.NewErrNotFound("not found")
 	}
 	metricTypeStr := parts[2]
 	value := parts[4]
 	if !isType(metricTypeStr) {
-		return advicerrors.ErrBadRequest
+		return advicerrors.NewErrBadRequest("bad request")
 	}
 	if !isValue(value) {
-		return advicerrors.ErrBadRequest
+		return advicerrors.NewErrBadRequest("bad request")
 	}
 	return nil
 }

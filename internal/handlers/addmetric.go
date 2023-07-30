@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/zelas91/metric-collector/internal/advicerrors"
 	advUtils "github.com/zelas91/metric-collector/internal/advicerrors/utils"
 	"github.com/zelas91/metric-collector/internal/storages"
 	"github.com/zelas91/metric-collector/internal/utils/types"
@@ -51,7 +52,7 @@ func NewMetricHandler(mem *storages.MemStorage) *MetricHandler {
 //	}
 //
 // post method
-func (h *MetricHandler) MetricAdd(w http.ResponseWriter, r *http.Request) error {
+func (h *MetricHandler) MetricAdd(w http.ResponseWriter, r *http.Request) *advicerrors.AppError {
 	parts := strings.Split(r.URL.Path, "/")
 	err := advUtils.CheckUpdateMetric(r.Method, parts)
 	if err != nil {
