@@ -1,17 +1,9 @@
 package main
 
-import (
-	"github.com/zelas91/metric-collector/internal/advicerrors"
-	"github.com/zelas91/metric-collector/internal/handlers"
-	"github.com/zelas91/metric-collector/internal/storages"
-	"net/http"
-)
+import "github.com/zelas91/metric-collector/internal/server"
 
 func main() {
-	hand := handlers.NewMetricHandler(storages.NewMemStorage())
-	mux := http.NewServeMux()
-	mux.HandleFunc("/update/", advicerrors.Middleware(hand.MetricAdd))
-	err := http.ListenAndServe(":8080", mux)
+	err := server.Run("8080")
 	if err != nil {
 		panic(err)
 	}

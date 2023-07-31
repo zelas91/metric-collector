@@ -1,7 +1,8 @@
 package utils
 
 import (
-	"github.com/zelas91/metric-collector/internal/advicerrors"
+	"github.com/zelas91/metric-collector/internal/server/advicerrors"
+	"github.com/zelas91/metric-collector/internal/server/utils/types"
 	"net/http"
 	"strconv"
 )
@@ -13,8 +14,8 @@ func isValue(value string) bool {
 func isType(mType string) bool {
 	switch mType {
 
-	case "counter":
-	case "gauge":
+	case types.CounterType:
+	case types.GaugaType:
 	default:
 		return false
 	}

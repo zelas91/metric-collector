@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zelas91/metric-collector/internal/advicerrors"
-	"github.com/zelas91/metric-collector/internal/storages"
+	"github.com/zelas91/metric-collector/internal/server/advicerrors"
+	"github.com/zelas91/metric-collector/internal/server/storages"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -58,7 +58,7 @@ func TestAddMetric_MetricAdd(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(advicerrors.Middleware(test.updateHandler.MetricAdd))
+			h := http.HandlerFunc(advicerrors.AdviceHandler(test.updateHandler.MetricAdd))
 			h(w, request)
 			read, err := io.ReadAll(w.Result().Body)
 			require.NoError(t, err, "Body read error")
