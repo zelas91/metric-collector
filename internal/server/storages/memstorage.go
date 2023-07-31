@@ -7,8 +7,8 @@ import (
 )
 
 type MemStorage struct {
-	Gauge   map[string]*types.Gauge
-	Counter map[string]*types.Counter //name , type , value
+	Gauge   map[string]types.Gauge
+	Counter map[string]types.Counter //name , type , value
 }
 
 func (m *MemStorage) AddMetric(name, typeMetric, value string) {
@@ -18,13 +18,13 @@ func (m *MemStorage) AddMetric(name, typeMetric, value string) {
 		existingValue, ok := m.Counter[name]
 		if ok {
 			newValue := val + existingValue.Value
-			m.Counter[name] = &types.Counter{Value: newValue}
+			m.Counter[name] = types.Counter{Value: newValue}
 		} else {
-			m.Counter[name] = &types.Counter{Value: val}
+			m.Counter[name] = types.Counter{Value: val}
 		}
 	case types.GaugeType:
 		val, _ := strconv.ParseFloat(value, 64)
-		m.Gauge[name] = &types.Gauge{Value: val}
+		m.Gauge[name] = types.Gauge{Value: val}
 	}
 }
 
@@ -34,7 +34,7 @@ func (m *MemStorage) ReadMetric(name string) map[string]interface{} {
 }
 
 func NewMemStorage() *MemStorage {
-	return &MemStorage{Gauge: make(map[string]*types.Gauge),
-		Counter: make(map[string]*types.Counter),
+	return &MemStorage{Gauge: make(map[string]types.Gauge),
+		Counter: make(map[string]types.Counter),
 	}
 }
