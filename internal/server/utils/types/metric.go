@@ -11,6 +11,6 @@ type Counter struct {
 }
 
 const (
-	GaugaType   = "gauge"
+	GaugeType   = "gauge"
 	CounterType = "counter"
 )

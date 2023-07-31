@@ -58,7 +58,7 @@ func TestAddMetric_MetricAdd(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(advicerrors.AdviceHandler(test.updateHandler.MetricAdd))
+			h := advicerrors.AdviceHandler(test.updateHandler.MetricAdd)
 			h(w, request)
 			read, err := io.ReadAll(w.Result().Body)
 			require.NoError(t, err, "Body read error")

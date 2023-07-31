@@ -22,7 +22,7 @@ func (m *MemStorage) AddMetric(name, typeMetric, value string) {
 		} else {
 			m.Counter[name] = &types.Counter{Value: val}
 		}
-	case types.GaugaType:
+	case types.GaugeType:
 		val, _ := strconv.ParseFloat(value, 64)
 		m.Gauge[name] = &types.Gauge{Value: val}
 	}
