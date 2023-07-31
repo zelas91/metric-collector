@@ -15,7 +15,7 @@ func isType(mType string) bool {
 	switch mType {
 
 	case types.CounterType:
-	case types.GaugaType:
+	case types.GaugeType:
 	default:
 		return false
 	}
