@@ -49,7 +49,7 @@ func TestCheckUpdateMetric(t *testing.T) {
 	}
 }
 
-func Test_isType(t *testing.T) {
+func TestIsType(t *testing.T) {
 	tests := []struct {
 		name    string
 		want    bool
@@ -78,7 +78,7 @@ func Test_isType(t *testing.T) {
 	}
 }
 
-func Test_isValue(t *testing.T) {
+func TestIsValue(t *testing.T) {
 	tests := []struct {
 		name  string
 		want  bool

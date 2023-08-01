@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestAddMetric_MetricAdd(t *testing.T) {
+func TestAddMetric(t *testing.T) {
 	type want struct {
 		code int
 		body string

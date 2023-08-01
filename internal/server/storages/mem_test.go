@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestMemStorage_AddMetric(t *testing.T) {
+func TestAddMetric(t *testing.T) {
 	tests := []struct {
 		name    string
 		memType string
