@@ -44,7 +44,7 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
 	return nil
 }
 
-func Run(pollInterval, reportInterval time.Duration, baseurl string) {
+func Run(pollInterval, reportInterval time.Duration, baseURL string) {
 	s := NewStats()
 	c := NewClientHttp()
 	var wg sync.WaitGroup
@@ -59,7 +59,7 @@ func Run(pollInterval, reportInterval time.Duration, baseurl string) {
 	go func() {
 		for {
 			<-time.After(reportInterval * time.Second)
-			err := c.UpdateMetrics(s, baseurl)
+			err := c.UpdateMetrics(s, baseURL)
 			if err != nil {
 				panic(err)
 			}
