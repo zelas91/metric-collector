@@ -27,7 +27,7 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			panic(errors.New("answer result is not correct"))
+			return errors.New("answer result is not correct")
 		}
 	}
 
@@ -38,7 +38,7 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
 			return err
 		}
 		if resp.StatusCode != 200 {
-			panic(errors.New("answer result is not correct"))
+			return errors.New("answer result is not correct")
 		}
 	}
 	return nil

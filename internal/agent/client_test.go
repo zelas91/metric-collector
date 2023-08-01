@@ -1,30 +1,25 @@
 package agent
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"net/http"
+	"github.com/zelas91/metric-collector/internal/server/advicerrors"
+	"github.com/zelas91/metric-collector/internal/server/handlers"
+	"github.com/zelas91/metric-collector/internal/server/storages"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
 func TestUpdateMetrics(t *testing.T) {
 	t.Run("test update metric #1", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			fmt.Println(request.URL)
-			fmt.Println(request.URL.String())
-			fmt.Println(request.RequestURI)
-			parts := strings.Split(strings.TrimPrefix(request.RequestURI, "/"), "/")
-			assert.Equal(t, 3, len(parts))
-		}))
+
+		handler := advicerrors.AdviceHandler(handlers.NewMetricHandler(storages.NewMemStorage()).MetricAdd)
+		server := httptest.NewServer(handler)
 		defer server.Close()
 
 		client := NewClientHttp()
 		s := NewStats()
 		s.ReadStats()
-		err := client.UpdateMetrics(s, server.URL)
-
+		err := client.UpdateMetrics(s, server.URL+"/update")
 		assert.NoError(t, err)
 	})
 
