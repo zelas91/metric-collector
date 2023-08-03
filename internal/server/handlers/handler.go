@@ -16,7 +16,7 @@ func NewHandler(memStore repository.MemRepository) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.Use(MiddlewareSetContextHtml)
+	router.Use(MiddlewareSetContextHTML)
 	router.GET("/", h.GetMetrics)
 	update := router.Group("/update")
 	value := router.Group("/value")

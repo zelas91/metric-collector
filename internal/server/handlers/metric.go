@@ -84,7 +84,7 @@ func (h *Handler) GetMetrics(c *gin.Context) {
 
 func checkValid(c *gin.Context, typ, value string) {
 	if !isValue(value) || !isType(typ) {
-		newErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("not valid name or type "))
+		newErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
 		return
 	}
 }

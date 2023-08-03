@@ -7,7 +7,7 @@ func MiddlewareSetContextPlain(c *gin.Context) {
 	c.Next()
 }
 
-func MiddlewareSetContextHtml(c *gin.Context) {
+func MiddlewareSetContextHTML(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	c.Next()
 }
