@@ -47,8 +47,8 @@ func TestAddMetric(t *testing.T) {
 			h := test.handler.InitRoutes()
 
 			h.ServeHTTP(w, request)
-			body := w.Result().Body
 			statusCode := w.Result().StatusCode
+			body := w.Result().Body
 			read, err := io.ReadAll(body)
 			require.NoError(t, err, "Body read error")
 			err = body.Close()
