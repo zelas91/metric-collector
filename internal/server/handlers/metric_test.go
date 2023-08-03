@@ -48,12 +48,13 @@ func TestAddMetric(t *testing.T) {
 
 			h.ServeHTTP(w, request)
 			body := w.Result().Body
+			statusCode := w.Result().StatusCode
 			read, err := io.ReadAll(body)
 			require.NoError(t, err, "Body read error")
 			err = body.Close()
 			require.NoError(t, err, "Body close error")
 			result := strings.TrimSpace(string(read))
-			assert.Equal(t, test.want.code, w.Result().StatusCode, "status code not as expected")
+			assert.Equal(t, test.want.code, statusCode, "status code not as expected")
 			assert.Equal(t, test.want.body, result, "status code not as expected")
 		})
 	}
@@ -88,9 +89,11 @@ func TestGetMetric(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
 			h := handler.InitRoutes()
-
+			statusCode := w.Result().StatusCode
+			err := w.Result().Body.Close()
+			require.NoError(t, err, "Body close error")
 			h.ServeHTTP(w, request)
-			assert.Equal(t, test.want, w.Result().StatusCode, "status code not as expected")
+			assert.Equal(t, test.want, statusCode, "status code not as expected")
 		})
 	}
 }
