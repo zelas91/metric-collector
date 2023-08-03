@@ -93,11 +93,11 @@ func TestGetMetric(t *testing.T) {
 
 			h := handler.InitRoutes()
 			h.ServeHTTP(w, request)
-			res := w.Result()
 			defer func(w *http.Response) {
 				err := w.Body.Close()
 				require.NoError(t, err, "Body close error")
-			}(res)
+			}(w.Result())
+			res := w.Result()
 
 			statusCode := res.StatusCode
 
