@@ -13,17 +13,17 @@ type ClientHttp struct {
 	Client *resty.Client
 }
 
-func NewClientHttp() *ClientHttp {
+func NewClientHTTP() *ClientHttp {
 	return &ClientHttp{Client: resty.New()}
 }
 
-func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
+func (c *ClientHttp) UpdateMetrics(s *Stats, baseURL string) error {
 	for name, value := range s.GetGauges() {
 		resp, err := c.Client.R().SetPathParams(map[string]string{
 			"type":  types.GaugeType,
 			"name":  name,
 			"value": fmt.Sprintf("%f", value.Value),
-		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseUrl))
+		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
 			"type":  types.GaugeType,
 			"name":  name,
 			"value": fmt.Sprintf("%d", value.Value),
-		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseUrl))
+		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
 
 func Run(pollInterval, reportInterval time.Duration, baseURL string) {
 	s := NewStats()
-	c := NewClientHttp()
+	c := NewClientHTTP()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
