@@ -15,7 +15,7 @@ func TestUpdateMetrics(t *testing.T) {
 		server := httptest.NewServer(handler.InitRoutes())
 		defer server.Close()
 
-		client := NewClientHttp()
+		client := NewClientHTTP()
 		s := NewStats()
 		s.ReadStats()
 		err := client.UpdateMetrics(s, server.URL+"/update")
