@@ -49,12 +49,7 @@ func TestAddMetric(t *testing.T) {
 			h.ServeHTTP(w, request)
 			res := w.Result()
 
-			defer func() {
-				err := res.Body.Close()
-				if err != nil {
-					require.NoError(t, err, "Body close error")
-				}
-			}()
+			defer res.Body.Close()
 
 			statusCode := res.StatusCode
 			read, err := io.ReadAll(res.Body)
