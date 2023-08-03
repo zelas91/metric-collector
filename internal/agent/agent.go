@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/zelas91/metric-collector/internal/server/utils/types"
+	"github.com/zelas91/metric-collector/internal/server/types"
 	"math/rand"
 	"runtime"
 )

@@ -1,10 +1,12 @@
 package main
 
-import "github.com/zelas91/metric-collector/internal/server"
+import (
+	"github.com/zelas91/metric-collector/internal/server"
+)
 
 func main() {
-	err := server.Run("8080")
-	if err != nil {
+	if err := server.Run("8080"); err != nil {
 		panic(err)
 	}
+
 }

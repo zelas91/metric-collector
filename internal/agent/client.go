@@ -3,41 +3,45 @@ package agent
 import (
 	"errors"
 	"fmt"
-	"github.com/zelas91/metric-collector/internal/server/utils/types"
-	"net/http"
+	"github.com/go-resty/resty/v2"
+	"github.com/zelas91/metric-collector/internal/server/types"
 	"sync"
 	"time"
 )
 
 type ClientHttp struct {
-	Client *http.Client
+	Client *resty.Client
 }
 
 func NewClientHttp() *ClientHttp {
-	return &ClientHttp{Client: &http.Client{
-		Timeout: 1 * time.Second,
-	}}
+	return &ClientHttp{Client: resty.New()}
 }
 
 func (c *ClientHttp) UpdateMetrics(s *Stats, baseUrl string) error {
-	for k, v := range s.GetGauges() {
-		url := fmt.Sprintf("%s/%s/%s/%f", baseUrl, types.GaugeType, k, v.Value)
-		resp, err := c.Client.Post(url, "text/plain", nil)
+	for name, value := range s.GetGauges() {
+		resp, err := c.Client.R().SetPathParams(map[string]string{
+			"type":  types.GaugeType,
+			"name":  name,
+			"value": fmt.Sprintf("%f", value.Value),
+		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseUrl))
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode != 200 {
+		if resp.StatusCode() != 200 {
 			return errors.New("answer result is not correct")
 		}
 	}
 
-	for k, v := range s.GetCounters() {
-		url := fmt.Sprintf("%s/%s/%s/%d", baseUrl, types.CounterType, k, v.Value)
-		resp, err := c.Client.Post(url, "text/plain", nil)
+	for name, value := range s.GetCounters() {
+		resp, err := c.Client.R().SetPathParams(map[string]string{
+			"type":  types.GaugeType,
+			"name":  name,
+			"value": fmt.Sprintf("%d", value.Value),
+		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseUrl))
 		if err != nil {
 			return err
 		}
-		if resp.StatusCode != 200 {
+		if resp.StatusCode() != 200 {
 			return errors.New("answer result is not correct")
 		}
 	}

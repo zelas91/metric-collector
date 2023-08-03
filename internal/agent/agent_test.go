@@ -2,7 +2,7 @@ package agent
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/zelas91/metric-collector/internal/server/utils/types"
+	"github.com/zelas91/metric-collector/internal/server/types"
 	"testing"
 )
 
