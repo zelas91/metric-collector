@@ -47,13 +47,17 @@ func TestAddMetric(t *testing.T) {
 			h := test.handler.InitRoutes()
 
 			h.ServeHTTP(w, request)
+			res := w.Result()
+
 			defer func() {
-				err := w.Result().Body.Close()
-				require.NoError(t, err, "Body close error")
+				err := res.Body.Close()
+				if err != nil {
+					require.NoError(t, err, "Body close error")
+				}
 			}()
 
-			statusCode := w.Result().StatusCode
-			read, err := io.ReadAll(w.Result().Body)
+			statusCode := res.StatusCode
+			read, err := io.ReadAll(res.Body)
 			require.NoError(t, err, "Body read error")
 
 			result := strings.TrimSpace(string(read))
