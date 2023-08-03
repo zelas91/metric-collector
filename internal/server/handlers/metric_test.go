@@ -93,15 +93,12 @@ func TestGetMetric(t *testing.T) {
 
 			h := handler.InitRoutes()
 			h.ServeHTTP(w, request)
-			defer func(w *http.Response) {
-				err := w.Body.Close()
+			defer func() {
+				err := w.Result().Body.Close()
 				require.NoError(t, err, "Body close error")
-			}(w.Result())
-			res := w.Result()
+			}()
 
-			statusCode := res.StatusCode
-
-			assert.Equal(t, test.want, statusCode, "status code not as expected")
+			assert.Equal(t, test.want, w.Result().StatusCode, "status code not as expected")
 		})
 	}
 }
