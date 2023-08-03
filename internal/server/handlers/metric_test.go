@@ -47,10 +47,11 @@ func TestAddMetric(t *testing.T) {
 			h := test.handler.InitRoutes()
 
 			h.ServeHTTP(w, request)
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
+			defer func() {
+				err := w.Result().Body.Close()
 				require.NoError(t, err, "Body close error")
-			}(w.Result().Body)
+			}()
+
 			statusCode := w.Result().StatusCode
 			read, err := io.ReadAll(w.Result().Body)
 			require.NoError(t, err, "Body read error")
@@ -93,12 +94,18 @@ func TestGetMetric(t *testing.T) {
 
 			h := handler.InitRoutes()
 			h.ServeHTTP(w, request)
+			res := w.Result()
+
 			defer func() {
-				err := w.Result().Body.Close()
-				require.NoError(t, err, "Body close error")
+				err := res.Body.Close()
+				if err != nil {
+					require.NoError(t, err, "Body close error")
+				}
 			}()
 
-			assert.Equal(t, test.want, w.Result().StatusCode, "status code not as expected")
+			statusCode := res.StatusCode
+
+			assert.Equal(t, test.want, statusCode, "status code not as expected")
 		})
 	}
 }
