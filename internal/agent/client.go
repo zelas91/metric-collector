@@ -48,21 +48,21 @@ func (c *ClientHttp) UpdateMetrics(s *Stats, baseURL string) error {
 	return nil
 }
 
-func Run(pollInterval, reportInterval time.Duration, baseURL string) {
+func Run(pollInterval, reportInterval int, baseURL string) {
 	s := NewStats()
 	c := NewClientHTTP()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		for {
-			<-time.After(pollInterval * time.Second)
+			<-time.After(time.Duration(pollInterval) * time.Second)
 			s.ReadStats()
 
 		}
 	}()
 	go func() {
 		for {
-			<-time.After(reportInterval * time.Second)
+			<-time.After(time.Duration(reportInterval) * time.Second)
 			err := c.UpdateMetrics(s, baseURL)
 			if err != nil {
 				panic(err)
