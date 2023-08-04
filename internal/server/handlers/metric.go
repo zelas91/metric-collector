@@ -47,7 +47,6 @@ func (h *Handler) GetMetric(c *gin.Context) {
 	t := c.Param(paramType)
 	name := c.Param(paramName)
 	result := h.MemStore.ReadMetric(name, t)
-	fmt.Println(result, t, name)
 	if result == nil {
 		newErrorResponse(c, http.StatusNotFound, "not found")
 	}

@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type ClientHttp struct {
+type ClientHTTP struct {
 	Client *resty.Client
 }
 
-func NewClientHTTP() *ClientHttp {
-	return &ClientHttp{Client: resty.New()}
+func NewClientHTTP() *ClientHTTP {
+	return &ClientHTTP{Client: resty.New()}
 }
 
-func (c *ClientHttp) UpdateMetrics(s *Stats, baseURL string) error {
+func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	for name, value := range s.GetGauges() {
 		resp, err := c.Client.R().SetPathParams(map[string]string{
 			"type":  types.GaugeType,
