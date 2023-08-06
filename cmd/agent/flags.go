@@ -33,11 +33,11 @@ func NewConfig() *Config {
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = *addr
 	}
-	if cfg.ReportInterval > 0 {
+	if cfg.ReportInterval <= 0 {
 		cfg.ReportInterval = *reportInterval
 	}
 
-	if cfg.PollInterval > 0 {
+	if cfg.PollInterval <= 0 {
 		cfg.PollInterval = *pollInterval
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
