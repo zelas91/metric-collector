@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/caarlos0/env/v6"
 )
 
 var addr *string
@@ -17,18 +18,28 @@ func init() {
 }
 
 type Config struct {
-	BaseURL        string
-	ReportInterval int
-	PollInterval   int
+	BaseURL        string `env:"ADDRESS"`
+	ReportInterval int    `env:"REPORT_INTERVAL"`
+	PollInterval   int    `env:"POLL_INTERVAL"`
 }
 
 func NewConfig() *Config {
-
-	flag.Parse()
-	baseURL := fmt.Sprintf("http://%s/update", *addr)
-	return &Config{
-		BaseURL:        baseURL,
-		PollInterval:   *pollInterval,
-		ReportInterval: *reportInterval,
+	var cfg Config
+	err := env.Parse(&cfg)
+	if err != nil {
+		fmt.Println(err)
 	}
+	flag.Parse()
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = *addr
+	}
+	if cfg.ReportInterval > 0 {
+		cfg.ReportInterval = *reportInterval
+	}
+
+	if cfg.PollInterval > 0 {
+		cfg.PollInterval = *pollInterval
+	}
+	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
+	return &cfg
 }
