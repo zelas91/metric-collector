@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"sync"
 	"time"
@@ -25,9 +26,10 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			"value": fmt.Sprintf("%f", value.Value),
 		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
-			return err
+			return fmt.Errorf("error post request %v", err)
 		}
 		if resp.StatusCode() != 200 {
+			logrus.Debugf("request post \"gauge\" status code =%d", resp.StatusCode())
 			return errors.New("answer result is not correct")
 		}
 	}
@@ -39,9 +41,11 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			"value": fmt.Sprintf("%d", value.Value),
 		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
-			return err
+			return fmt.Errorf("error post request %v", err)
 		}
 		if resp.StatusCode() != 200 {
+
+			logrus.Debugf("request post \"counter\" status code =%d", resp.StatusCode())
 			return errors.New("answer result is not correct")
 		}
 	}
@@ -65,7 +69,7 @@ func Run(pollInterval, reportInterval int, baseURL string) {
 			<-time.After(time.Duration(reportInterval) * time.Second)
 			err := c.UpdateMetrics(s, baseURL)
 			if err != nil {
-				panic(err)
+				logrus.Debug(err)
 			}
 
 		}

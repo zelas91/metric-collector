@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/storages"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
@@ -89,6 +90,7 @@ func checkValid(c *gin.Context, typ, value string) {
 }
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
+	logrus.Debugf("not valid value=%s", value)
 	return err == nil
 }
 

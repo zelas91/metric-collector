@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
+	"github.com/sirupsen/logrus"
 )
 
 var addr *string
@@ -27,7 +28,7 @@ func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Debugf("read env error=%v", err)
 	}
 	flag.Parse()
 	if cfg.BaseURL == "" {
@@ -41,5 +42,11 @@ func NewConfig() *Config {
 		cfg.PollInterval = *pollInterval
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
+	initLogger()
 	return &cfg
+}
+func initLogger() {
+	logrus.SetFormatter(new(logrus.JSONFormatter))
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetReportCaller(true)
 }
