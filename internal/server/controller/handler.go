@@ -1,12 +1,11 @@
-package handlers
+package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/middleware"
 )
 
-func InitRoutes(h *controller.MetricHandler) *gin.Engine {
+func (h *MetricHandler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
 	router.Use(middleware.SetContextHTML)
