@@ -1,4 +1,4 @@
-package controller
+package payload
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func newErrorResponse(c *gin.Context, statusCode int, message string) {
+func NewErrorResponse(c *gin.Context, statusCode int, message string) {
 	if err := c.AbortWithError(statusCode, errors.New(message)); err != nil {
 		logrus.Debugf("Error request status code = %d , error=%v", statusCode, err)
 	}

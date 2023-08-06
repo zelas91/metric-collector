@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zelas91/metric-collector/internal/server/handlers"
 	"github.com/zelas91/metric-collector/internal/server/storages"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"io"
@@ -19,21 +20,21 @@ func TestAddMetric(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		handler *Handler
+		handler *MetricHandler
 		want    want
 		url     string
 		method  string
 	}{
 		{
 			name:    "Bad request #1",
-			handler: NewHandler(storages.NewMemStorage()),
+			handler: NewMetricHandler(storages.NewMemStorage()),
 			url:     "/update/unknown/testCounter/100",
 			method:  http.MethodPost,
 			want:    want{code: 400, body: ""},
 		},
 		{
 			name:    "Ok #3",
-			handler: NewHandler(storages.NewMemStorage()),
+			handler: NewMetricHandler(storages.NewMemStorage()),
 			want:    want{code: 200, body: ""},
 			url:     "/update/counter/someMetric/527",
 			method:  http.MethodPost,
@@ -44,7 +45,7 @@ func TestAddMetric(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			w := httptest.NewRecorder()
-			h := test.handler.InitRoutes()
+			h := handlers.InitRoutes(test.handler)
 
 			h.ServeHTTP(w, request)
 			res := w.Result()
@@ -62,7 +63,7 @@ func TestAddMetric(t *testing.T) {
 
 }
 func TestGetMetric(t *testing.T) {
-	handler := &Handler{MemStore: &storages.MemStorage{Gauge: map[string]types.Gauge{
+	handler := &MetricHandler{MemStore: &storages.MemStorage{Gauge: map[string]types.Gauge{
 		"cpu":    {Value: 0.85},
 		"memory": {Value: 0.6},
 	}, Counter: map[string]types.Counter{
@@ -90,7 +91,7 @@ func TestGetMetric(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
 
-			h := handler.InitRoutes()
+			h := handlers.InitRoutes(handler)
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()

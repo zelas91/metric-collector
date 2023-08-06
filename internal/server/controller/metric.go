@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/server/payload"
+	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/storages"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
@@ -37,34 +39,41 @@ const (
 		"</html>"
 )
 
-func (h *Handler) AddMetric(c *gin.Context) {
+type MetricHandler struct {
+	MemStore repository.MemRepository
+}
+
+func NewMetricHandler(memStore repository.MemRepository) *MetricHandler {
+	return &MetricHandler{MemStore: memStore}
+}
+func (h *MetricHandler) AddMetric(c *gin.Context) {
 	val := c.Param(paramValue)
 	t := c.Param(paramType)
 	checkValid(c, t, val)
 	h.MemStore.AddMetric(c.Param(paramName), t, val)
 }
 
-func (h *Handler) GetMetric(c *gin.Context) {
+func (h *MetricHandler) GetMetric(c *gin.Context) {
 	t := c.Param(paramType)
 	name := c.Param(paramName)
 	result := h.MemStore.ReadMetric(name, t)
 	if result == nil {
-		newErrorResponse(c, http.StatusNotFound, "not found")
+		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 	}
 	if _, err := c.Writer.WriteString(fmt.Sprintf("%v", result)); err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 	}
 }
 
-func (h *Handler) GetMetrics(c *gin.Context) {
+func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	body, err := template.New("test").Parse(templateHTML)
 	if err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	memStore, ok := h.MemStore.(*storages.MemStorage)
 	if !ok {
-		newErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return
 	}
 	arraysMetric := make(map[string]interface{})
@@ -77,14 +86,14 @@ func (h *Handler) GetMetrics(c *gin.Context) {
 	}
 
 	if err = body.Execute(c.Writer, arraysMetric); err != nil {
-		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
 
 func checkValid(c *gin.Context, typ, value string) {
 	if !isValue(value) || !isType(typ) {
-		newErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
+		payload.NewErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
 		return
 	}
 }

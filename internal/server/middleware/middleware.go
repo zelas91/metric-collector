@@ -1,13 +1,13 @@
-package controller
+package middleware
 
 import "github.com/gin-gonic/gin"
 
-func MiddlewareSetContextPlain(c *gin.Context) {
+func SetContextPlain(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	c.Next()
 }
 
-func MiddlewareSetContextHTML(c *gin.Context) {
+func SetContextHTML(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	c.Next()
 }
