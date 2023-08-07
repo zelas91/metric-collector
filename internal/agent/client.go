@@ -30,7 +30,6 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			return fmt.Errorf("error post request %v", err)
 		}
 		if resp.StatusCode() != 200 {
-			logrus.Debugf("request post \"gauge\" status code =%d", resp.StatusCode())
 			return errors.New("answer result is not correct")
 		}
 	}
@@ -45,8 +44,6 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			return fmt.Errorf("error post request %v", err)
 		}
 		if resp.StatusCode() != 200 {
-
-			logrus.Debugf("request post \"counter\" status code =%d", resp.StatusCode())
 			return errors.New("answer result is not correct")
 		}
 	}
