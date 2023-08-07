@@ -99,7 +99,9 @@ func checkValid(c *gin.Context, typ, value string) {
 }
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
-	logrus.Debugf("not valid value=%s", value)
+	if err != nil {
+		logrus.Debugf("not valid value=%s", value)
+	}
 	return err == nil
 }
 

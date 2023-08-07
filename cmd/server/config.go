@@ -34,5 +34,5 @@ func NewConfig() *Config {
 func initLogger() {
 	logrus.SetFormatter(new(logrus.JSONFormatter))
 	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetReportCaller(true)
+	//logrus.SetReportCaller(true)
 }
