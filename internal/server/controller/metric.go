@@ -20,23 +20,23 @@ const (
 )
 const (
 	templateHTML = "<!DOCTYPE html> " +
-		"<html>       " +
-		"<head>             " +
-		"<title>Table Metrics</title>         " +
-		"</head>         " +
-		"<body>            " +
-		"<table>               " +
-		"<td>Name</td>                     " +
-		"<td>Value</td> 	" +
-		"{{range $key, $value := .}}                     " +
-		"<tr>                         " +
-		"<td>{{$key}}</td>                     " +
-		"<td>{{$value}}</td>                    " +
-		"</tr>                 " +
-		"{{end}}             " +
-		"</table>         " +
-		"</body>         " +
-		"</html>"
+		`<html>       
+			<head>             
+				<title>Table Metrics</title>         
+			</head>         
+			<body>            
+				<table>               
+					<td>Name</td>                     
+					<td>Value</td> 	
+					{{range $key, $value := .}}                     
+					<tr>                         
+						<td>{{$key}}</td>                    
+						<td>{{$value}}</td>                    
+					</tr>                 
+					{{end}}             
+				</table>         
+			</body>         
+		</html>`
 )
 
 type MetricHandler struct {
