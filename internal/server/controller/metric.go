@@ -49,7 +49,10 @@ func NewMetricHandler(memStore repository.MemRepository) *MetricHandler {
 func (h *MetricHandler) AddMetric(c *gin.Context) {
 	val := c.Param(paramValue)
 	t := c.Param(paramType)
-	checkValid(c, t, val)
+	if ok := checkValid(t, val); !ok {
+		payload.NewErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
+		return
+	}
 	h.MemStore.AddMetric(c.Param(paramName), t, val)
 }
 
@@ -59,9 +62,11 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	result := h.MemStore.ReadMetric(name, t)
 	if result == nil {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
+		return
 	}
 	if _, err := c.Writer.WriteString(fmt.Sprintf("%v", result)); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return
 	}
 }
 
@@ -91,11 +96,11 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	}
 }
 
-func checkValid(c *gin.Context, typ, value string) {
+func checkValid(typ, value string) bool {
 	if !isValue(value) || !isType(typ) {
-		payload.NewErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
-		return
+		return false
 	}
+	return true
 }
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
