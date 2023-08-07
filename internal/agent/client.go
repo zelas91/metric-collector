@@ -6,6 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -15,7 +16,7 @@ type ClientHTTP struct {
 }
 
 func NewClientHTTP() *ClientHTTP {
-	return &ClientHTTP{Client: resty.New()}
+	return &ClientHTTP{Client: resty.NewWithClient(&http.Client{Timeout: 1 * time.Second})}
 }
 
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
