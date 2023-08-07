@@ -25,19 +25,12 @@ func TestGetGauges(t *testing.T) {
 		"Alloc":         {Value: float64(stats.Alloc)},
 		"GCCPUFraction": {Value: stats.GCCPUFraction},
 		"GCSys":         {Value: float64(stats.GCSys)},
-		// Add the remaining expected gauges here
-		// ...
-		"RandomValue": {Value: float64(stats.RandomValue)},
+		"RandomValue":   {Value: float64(stats.RandomValue)},
 	}
 	for key, expectedValue := range expectedGauges {
 		actualValue, ok := gauges[key]
-		if !ok {
-			t.Errorf("Gauge with key %q not found", key)
-		}
-
-		if actualValue.Value != expectedValue.Value {
-			t.Errorf("Expected gauge value of key %q to be %f, got %f", key, expectedValue.Value, actualValue.Value)
-		}
+		assert.True(t, ok, "Gauge with key %q not found", key)
+		assert.Equal(t, expectedValue.Value, actualValue.Value)
 	}
 }
 func TestGetCounters(t *testing.T) {
@@ -50,12 +43,7 @@ func TestGetCounters(t *testing.T) {
 
 	for key, expectedValue := range expectedCounters {
 		actualValue, ok := counters[key]
-		if !ok {
-			t.Errorf("Counter with key %q not found", key)
-		}
-
-		if actualValue.Value != expectedValue.Value {
-			t.Errorf("Expected counter value of key %q to be %d, got %d", key, expectedValue.Value, actualValue.Value)
-		}
+		assert.True(t, ok, "Counter with key %q not found", key)
+		assert.Equal(t, expectedValue.Value, actualValue.Value)
 	}
 }
