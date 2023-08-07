@@ -105,7 +105,7 @@ func checkValid(typ, value string) bool {
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		logrus.Debugf("not valid value=%s", value)
+		logrus.Debugf("not valid value=%s, error=%v", value, err)
 	}
 	return err == nil
 }
