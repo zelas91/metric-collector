@@ -1,13 +1,15 @@
 package agent
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -50,31 +52,63 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	return nil
 }
 
+//func Run(pollInterval, reportInterval int, baseURL string) {
+//	s := NewStats()
+//	c := NewClientHTTP()
+//	ctx, cancel := context.WithCancel(context.Background())
+//	defer cancel()
+//
+//	go func() {
+//		ticker := time.NewTicker(time.Duration(reportInterval) * time.Second)
+//		defer ticker.Stop()
+//
+//		for {
+//			select {
+//			case <-ctx.Done():
+//				return
+//			case <-ticker.C:
+//				err := c.UpdateMetrics(s, baseURL)
+//				if err != nil {
+//					logrus.Debug(err)
+//				}
+//			default:
+//				s.ReadStats()
+//				time.Sleep(time.Duration(pollInterval) * time.Second)
+//			}
+//		}
+//	}()
+//
+//	<-ctx.Done()
+//}
+
 func Run(pollInterval, reportInterval int, baseURL string) {
 	s := NewStats()
 	c := NewClientHTTP()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		ticker := time.NewTicker(time.Duration(reportInterval) * time.Second)
-		defer ticker.Stop()
+		poll := time.Now().Add(time.Duration(pollInterval) * time.Second)
+		report := time.Now().Add(time.Duration(reportInterval) * time.Second)
 
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
+
+			if time.Now().After(poll) {
+				poll = time.Now().Add(time.Duration(reportInterval) * time.Second)
+				s.ReadStats()
+			}
+
+			if time.Now().After(report) {
+				report = time.Now().Add(time.Duration(reportInterval) * time.Second)
 				err := c.UpdateMetrics(s, baseURL)
 				if err != nil {
 					logrus.Debug(err)
 				}
-			default:
-				s.ReadStats()
-				time.Sleep(time.Duration(pollInterval) * time.Second)
 			}
-		}
-	}()
 
-	<-ctx.Done()
+			time.Sleep(500 * time.Microsecond)
+
+		}
+
+	}()
+	<-sigChan
 }
