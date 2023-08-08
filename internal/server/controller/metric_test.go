@@ -63,12 +63,13 @@ func TestAddMetric(t *testing.T) {
 }
 func TestGetMetric(t *testing.T) {
 	handler := &MetricHandler{MemStore: &storages.MemStorage{Gauge: map[string]types.Gauge{
-		"cpu":    {Value: 0.85},
-		"memory": {Value: 0.6},
-	}, Counter: map[string]types.Counter{
-		"requests": {Value: 100},
-		"errors":   {Value: 5},
-	}}}
+		"cpu":    types.Gauge(0.85),
+		"memory": types.Gauge(0.6),
+	},
+		Counter: map[string]types.Counter{
+			"requests": types.Counter(100),
+			"errors":   types.Counter(5),
+		}}}
 	tests := []struct {
 		name string
 		want int

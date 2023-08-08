@@ -1,14 +1,15 @@
 package types
 
-type MetricType int
-
-type Gauge struct {
-	Value float64
+type MetricTypeValue interface {
+	isValue()
 }
+type Gauge float64
 
-type Counter struct {
-	Value int64
-}
+func (Gauge) isValue() {}
+
+type Counter int64
+
+func (Counter) isValue() {}
 
 const (
 	GaugeType   = "gauge"

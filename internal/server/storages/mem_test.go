@@ -11,12 +11,12 @@ import (
 func TestAddMetric(t *testing.T) {
 	memStorage := &MemStorage{
 		Gauge: map[string]types.Gauge{
-			"cpu_usage":    {Value: 0.85},
-			"memory_usage": {Value: 0.6},
+			"cpu_usage":    types.Gauge(0.85),
+			"memory_usage": types.Gauge(0.6),
 		},
 		Counter: map[string]types.Counter{
-			"requests": {Value: 100},
-			"errors":   {Value: 5},
+			"requests": types.Counter(100),
+			"errors":   types.Counter(5),
 		},
 	}
 	tests := []struct {
@@ -41,11 +41,11 @@ func TestAddMetric(t *testing.T) {
 			if test.metricType == types.GaugeType {
 				val, err := strconv.ParseFloat(test.expected, 64)
 				require.NoError(t, err)
-				assert.Equal(t, val, memStorage.Gauge[test.name].Value)
+				assert.Equal(t, types.Gauge(val), memStorage.Gauge[test.name])
 			} else {
 				val, err := strconv.ParseInt(test.expected, 10, 64)
 				require.NoError(t, err)
-				assert.Equal(t, val, memStorage.Counter[test.name].Value)
+				assert.Equal(t, types.Counter(val), memStorage.Counter[test.name])
 			}
 		})
 	}
@@ -54,12 +54,12 @@ func TestAddMetric(t *testing.T) {
 func TestReadMetric(t *testing.T) {
 	memStorage := &MemStorage{
 		Gauge: map[string]types.Gauge{
-			"cpu_usage":    {Value: 0.85},
-			"memory_usage": {Value: 0.6},
+			"cpu_usage":    types.Gauge(0.85),
+			"memory_usage": types.Gauge(0.6),
 		},
 		Counter: map[string]types.Counter{
-			"requests": {Value: 100},
-			"errors":   {Value: 5},
+			"requests": types.Counter(100),
+			"errors":   types.Counter(5),
 		},
 	}
 
@@ -67,19 +67,19 @@ func TestReadMetric(t *testing.T) {
 		name       string
 		metricName string
 		metricType string
-		expected   interface{}
+		expected   types.MetricTypeValue
 	}{
 		{
 			name:       "Read Gauge Metric",
 			metricName: "cpu_usage",
 			metricType: types.GaugeType,
-			expected:   0.85,
+			expected:   types.Gauge(0.85),
 		},
 		{
 			name:       "Read Counter Metric",
 			metricName: "requests",
 			metricType: types.CounterType,
-			expected:   int64(100),
+			expected:   types.Counter(100),
 		},
 		{
 			name:       "Unknown Metric Type",

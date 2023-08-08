@@ -24,7 +24,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		resp, err := c.Client.R().SetPathParams(map[string]string{
 			"type":  types.GaugeType,
 			"name":  name,
-			"value": fmt.Sprintf("%f", value.Value),
+			"value": fmt.Sprintf("%f", value),
 		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
@@ -38,7 +38,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		resp, err := c.Client.R().SetPathParams(map[string]string{
 			"type":  types.GaugeType,
 			"name":  name,
-			"value": fmt.Sprintf("%d", value.Value),
+			"value": fmt.Sprintf("%d", value),
 		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)

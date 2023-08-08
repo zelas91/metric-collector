@@ -21,34 +21,34 @@ func (m *MemStorage) AddMetric(name, typeMetric, value string) {
 		}
 		existingValue, ok := m.Counter[name]
 		if ok {
-			newValue := val + existingValue.Value
-			m.Counter[name] = types.Counter{Value: newValue}
+			newValue := types.Counter(val) + existingValue
+			m.Counter[name] = newValue
 		} else {
-			m.Counter[name] = types.Counter{Value: val}
+			m.Counter[name] = types.Counter(val)
 		}
 	case types.GaugeType:
 		val, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			logrus.Debugf("convert string to float64 error=%v", err)
 		}
-		m.Gauge[name] = types.Gauge{Value: val}
+		m.Gauge[name] = types.Gauge(val)
 	}
 }
 
-func (m *MemStorage) ReadMetric(name string, t string) interface{} {
+func (m *MemStorage) ReadMetric(name string, t string) types.MetricTypeValue {
 	switch t {
 	case types.GaugeType:
 		val, ok := m.Gauge[name]
 		if !ok {
 			return nil
 		}
-		return val.Value
+		return val
 	case types.CounterType:
 		val, ok := m.Counter[name]
 		if !ok {
 			return nil
 		}
-		return val.Value
+		return val
 	default:
 		return nil
 	}

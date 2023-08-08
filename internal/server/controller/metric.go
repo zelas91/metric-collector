@@ -81,13 +81,13 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	arraysMetric := make(map[string]interface{}, len(memStore.Gauge)+len(memStore.Counter))
+	arraysMetric := make(map[string]types.MetricTypeValue, len(memStore.Gauge)+len(memStore.Counter))
 
 	for key, value := range memStore.Gauge {
-		arraysMetric[key] = value.Value
+		arraysMetric[key] = value
 	}
 	for key, value := range memStore.Counter {
-		arraysMetric[key] = value.Value
+		arraysMetric[key] = value
 	}
 
 	if err = body.Execute(c.Writer, arraysMetric); err != nil {

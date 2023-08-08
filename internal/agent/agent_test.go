@@ -22,15 +22,15 @@ func TestGetGauges(t *testing.T) {
 	gauges := stats.GetGauges()
 
 	var expectedGauges = map[string]types.Gauge{
-		"Alloc":         {Value: float64(stats.Alloc)},
-		"GCCPUFraction": {Value: stats.GCCPUFraction},
-		"GCSys":         {Value: float64(stats.GCSys)},
-		"RandomValue":   {Value: float64(stats.RandomValue)},
+		"Alloc":         types.Gauge(stats.Alloc),
+		"GCCPUFraction": types.Gauge(stats.GCCPUFraction),
+		"GCSys":         types.Gauge(stats.GCSys),
+		"RandomValue":   types.Gauge(stats.RandomValue),
 	}
 	for key, expectedValue := range expectedGauges {
 		actualValue, ok := gauges[key]
 		assert.True(t, ok, "Gauge with key %q not found", key)
-		assert.Equal(t, expectedValue.Value, actualValue.Value)
+		assert.Equal(t, expectedValue, actualValue)
 	}
 }
 func TestGetCounters(t *testing.T) {
@@ -38,12 +38,12 @@ func TestGetCounters(t *testing.T) {
 	counters := stats.GetCounters()
 
 	expectedCounters := map[string]types.Counter{
-		"PoolCounter": {Value: stats.PollCount},
+		"PoolCounter": types.Counter(stats.PollCount),
 	}
 
 	for key, expectedValue := range expectedCounters {
 		actualValue, ok := counters[key]
 		assert.True(t, ok, "Counter with key %q not found", key)
-		assert.Equal(t, expectedValue.Value, actualValue.Value)
+		assert.Equal(t, expectedValue, actualValue)
 	}
 }
