@@ -1,13 +1,13 @@
 package agent
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -53,24 +53,28 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 func Run(pollInterval, reportInterval int, baseURL string) {
 	s := NewStats()
 	c := NewClientHTTP()
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		for {
-			<-time.After(time.Duration(pollInterval) * time.Second)
-			s.ReadStats()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		}
-	}()
 	go func() {
+		ticker := time.NewTicker(time.Duration(reportInterval) * time.Second)
+		defer ticker.Stop()
+
 		for {
-			<-time.After(time.Duration(reportInterval) * time.Second)
-			err := c.UpdateMetrics(s, baseURL)
-			if err != nil {
-				logrus.Debug(err)
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := c.UpdateMetrics(s, baseURL)
+				if err != nil {
+					logrus.Debug(err)
+				}
+			default:
+				s.ReadStats()
+				time.Sleep(time.Duration(pollInterval) * time.Second)
 			}
-
 		}
 	}()
-	wg.Wait()
+
+	<-ctx.Done()
 }
