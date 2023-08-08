@@ -10,11 +10,11 @@ import (
 
 func TestAddMetric(t *testing.T) {
 	memStorage := &MemStorage{
-		Gauge: map[string]types.Gauge{
+		Gauge: map[string]types.MetricTypeValue{
 			"cpu_usage":    types.Gauge(0.85),
 			"memory_usage": types.Gauge(0.6),
 		},
-		Counter: map[string]types.Counter{
+		Counter: map[string]types.MetricTypeValue{
 			"requests": types.Counter(100),
 			"errors":   types.Counter(5),
 		},
@@ -53,11 +53,11 @@ func TestAddMetric(t *testing.T) {
 
 func TestReadMetric(t *testing.T) {
 	memStorage := &MemStorage{
-		Gauge: map[string]types.Gauge{
+		Gauge: map[string]types.MetricTypeValue{
 			"cpu_usage":    types.Gauge(0.85),
 			"memory_usage": types.Gauge(0.6),
 		},
-		Counter: map[string]types.Counter{
+		Counter: map[string]types.MetricTypeValue{
 			"requests": types.Counter(100),
 			"errors":   types.Counter(5),
 		},

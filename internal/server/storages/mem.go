@@ -1,6 +1,8 @@
 package storages
 
 import (
+	"errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"strconv"
@@ -8,8 +10,8 @@ import (
 )
 
 type MemStorage struct {
-	Gauge   map[string]types.Gauge
-	Counter map[string]types.Counter //name , type , value
+	Gauge   map[string]types.MetricTypeValue
+	Counter map[string]types.MetricTypeValue //name , type , value
 }
 
 func (m *MemStorage) AddMetric(name, typeMetric, value string) {
@@ -21,7 +23,7 @@ func (m *MemStorage) AddMetric(name, typeMetric, value string) {
 		}
 		existingValue, ok := m.Counter[name]
 		if ok {
-			newValue := types.Counter(val) + existingValue
+			newValue := types.Counter(val) + (existingValue.(types.Counter))
 			m.Counter[name] = newValue
 		} else {
 			m.Counter[name] = types.Counter(val)
@@ -55,7 +57,18 @@ func (m *MemStorage) ReadMetric(name string, t string) types.MetricTypeValue {
 }
 
 func NewMemStorage() *MemStorage {
-	return &MemStorage{Gauge: make(map[string]types.Gauge),
-		Counter: make(map[string]types.Counter),
+	return &MemStorage{Gauge: make(map[string]types.MetricTypeValue),
+		Counter: make(map[string]types.MetricTypeValue),
+	}
+}
+func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, error) {
+	switch t {
+	case types.GaugeType:
+		return m.Gauge, nil
+	case types.CounterType:
+		return m.Counter, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("Type %s not found", t))
+
 	}
 }

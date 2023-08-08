@@ -6,7 +6,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
-	"github.com/zelas91/metric-collector/internal/server/storages"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
 	"net/http"
@@ -76,17 +75,24 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	memStore, ok := h.MemStore.(*storages.MemStorage)
-	if !ok {
+
+	gauge, err := h.MemStore.GetByType(types.GaugeType)
+	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	arraysMetric := make(map[string]types.MetricTypeValue, len(memStore.Gauge)+len(memStore.Counter))
+	counter, err := h.MemStore.GetByType(types.CounterType)
 
-	for key, value := range memStore.Gauge {
+	if err != nil {
+		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	arraysMetric := make(map[string]types.MetricTypeValue, len(gauge)+len(counter))
+
+	for key, value := range gauge {
 		arraysMetric[key] = value
 	}
-	for key, value := range memStore.Counter {
+	for key, value := range counter {
 		arraysMetric[key] = value
 	}
 
