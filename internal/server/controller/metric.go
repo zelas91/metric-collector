@@ -82,7 +82,6 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		return
 	}
 	counter, err := h.MemStore.GetByType(types.CounterType)
-
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return

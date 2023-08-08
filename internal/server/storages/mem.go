@@ -1,7 +1,6 @@
 package storages
 
 import (
-	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -68,7 +67,7 @@ func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, erro
 	case types.CounterType:
 		return m.Counter, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("Type %s not found", t))
+		return nil, fmt.Errorf("type %s not found", t)
 
 	}
 }
