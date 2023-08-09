@@ -2,9 +2,7 @@ package storages
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"strconv"
 	"strings"
 )
 
@@ -13,26 +11,18 @@ type MemStorage struct {
 	Counter map[string]types.MetricTypeValue //name , type , value
 }
 
-func (m *MemStorage) AddMetric(name, typeMetric, value string) {
+func (m *MemStorage) AddMetric(name, typeMetric string, value float64) {
 	switch strings.ToLower(typeMetric) {
 	case types.CounterType:
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			logrus.Debugf("convert string to int64 error=%v", err)
-		}
 		existingValue, ok := m.Counter[name]
 		if ok {
-			newValue := types.Counter(val) + (existingValue.(types.Counter))
+			newValue := types.Counter(value) + (existingValue.(types.Counter))
 			m.Counter[name] = newValue
 		} else {
-			m.Counter[name] = types.Counter(val)
+			m.Counter[name] = types.Counter(value)
 		}
 	case types.GaugeType:
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			logrus.Debugf("convert string to float64 error=%v", err)
-		}
-		m.Gauge[name] = types.Gauge(val)
+		m.Gauge[name] = types.Gauge(value)
 	}
 }
 

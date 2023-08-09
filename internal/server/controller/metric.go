@@ -46,11 +46,15 @@ func NewMetricHandler(memStore repository.MemRepository) *MetricHandler {
 	return &MetricHandler{MemStore: memStore}
 }
 func (h *MetricHandler) AddMetric(c *gin.Context) {
-	val := c.Param(paramValue)
+	value := c.Param(paramValue)
 	t := c.Param(paramType)
-	if ok := checkValid(t, val); !ok {
+	if ok := checkValid(t, value); !ok {
 		payload.NewErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
 		return
+	}
+	val, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		logrus.Debugf("convert string to int64 error=%v", err)
 	}
 	h.MemStore.AddMetric(c.Param(paramName), t, val)
 }
