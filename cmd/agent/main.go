@@ -1,6 +1,8 @@
 package main
 
-import "github.com/zelas91/metric-collector/internal/agent"
+import (
+	"github.com/zelas91/metric-collector/internal/agent"
+)
 
 func main() {
 	conf := NewConfig()

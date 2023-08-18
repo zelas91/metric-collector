@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/logger"
 )
 
 var addr *string
@@ -18,10 +18,10 @@ type Config struct {
 
 func NewConfig() *Config {
 	var cfg Config
-	initLogger()
+	//initLogger()
 	err := env.Parse(&cfg)
 	if err != nil {
-		logrus.Debugf("read env error=%v", err)
+		logger.Log.Debugf("read env error=%v", err)
 	}
 	if cfg.Addr != "" {
 		return &cfg
@@ -31,8 +31,9 @@ func NewConfig() *Config {
 		Addr: *addr,
 	}
 }
-func initLogger() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
-	logrus.SetLevel(logrus.DebugLevel)
-	//logrus.SetReportCaller(true)
-}
+
+//func initLogger() {
+//	logrus.SetFormatter(new(logrus.JSONFormatter))
+//	logrus.SetLevel(logrus.DebugLevel)
+//	//logrus.SetReportCaller(true)
+//}

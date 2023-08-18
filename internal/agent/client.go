@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"os"
 	"os/signal"
@@ -69,7 +69,7 @@ func Run(pollInterval, reportInterval int, baseURL string) {
 			case <-tickerReport.C:
 				err := c.UpdateMetrics(s, baseURL)
 				if err != nil {
-					logrus.Debug(err)
+					logger.Log.Debug(err)
 				}
 			case <-tickerPoll.C:
 				s.ReadStats()

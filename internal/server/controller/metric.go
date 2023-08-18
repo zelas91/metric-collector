@@ -3,7 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -54,7 +54,7 @@ func (h *MetricHandler) AddMetric(c *gin.Context) {
 	}
 	val, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		logrus.Debugf("convert string to int64 error=%v", err)
+		logger.Log.Debugf("convert string to int64 error=%v", err)
 	}
 	h.MemStore.AddMetric(c.Param(paramName), t, val)
 }
@@ -114,7 +114,7 @@ func checkValid(typ, value string) bool {
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		logrus.Debugf("not valid value=%s, error=%v", value, err)
+		logger.Log.Debugf("not valid value=%s, error=%v", value, err)
 	}
 	return err == nil
 }
