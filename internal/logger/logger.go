@@ -11,6 +11,12 @@ import (
 var logger *zap.SugaredLogger
 var once sync.Once
 
+func Shutdown() {
+	err := logger.Sync()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 func New() *zap.SugaredLogger {
 
 	once.Do(func() {

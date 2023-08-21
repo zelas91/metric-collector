@@ -8,7 +8,7 @@ import (
 func (h *MetricHandler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.Use(middleware.SetContextHTML)
+	router.Use(middleware.SetContextHTML, middleware.WithLogging)
 	router.GET("/", h.GetMetrics)
 	update := router.Group("/update")
 	value := router.Group("/value")

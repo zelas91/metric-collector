@@ -1,14 +1,12 @@
 package agent
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -55,31 +53,27 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	return nil
 }
 
-func Run(pollInterval, reportInterval int, baseURL string) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) {
 	s := NewStats()
 	c := NewClientHTTP()
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
 
-	go func() {
-		tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
-		defer tickerReport.Stop()
-		tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
-		defer tickerPoll.Stop()
-		for {
-			select {
-			case <-tickerReport.C:
-				err := c.UpdateMetrics(s, baseURL)
-				if err != nil {
-					log.Debug(err)
-				}
-			case <-tickerPoll.C:
-				s.ReadStats()
+	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
+	defer tickerReport.Stop()
+	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
+	defer tickerPoll.Stop()
+	for {
+		select {
+		case <-tickerReport.C:
+			err := c.UpdateMetrics(s, baseURL)
+			if err != nil {
+				log.Debug(err)
 			}
+		case <-tickerPoll.C:
+			s.ReadStats()
+		case <-ctx.Done():
+			return
 		}
-	}()
-
-	<-sigChan
+	}
 }
 
 //
