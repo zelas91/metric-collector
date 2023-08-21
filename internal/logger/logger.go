@@ -25,8 +25,7 @@ func New() *zap.SugaredLogger {
 			log.Println(err)
 			l, err := zap.NewDevelopment()
 			if err != nil {
-				log.Println(err)
-				return
+				log.Fatal(err)
 			}
 			logger = l.Sugar()
 			return
@@ -38,11 +37,10 @@ func New() *zap.SugaredLogger {
 			log.Fatal(err)
 		}
 		l, err := cfg.Build()
-		logger = l.Sugar()
-
 		if err != nil {
 			log.Fatal(err)
 		}
+		logger = l.Sugar()
 	})
 	return logger
 }
