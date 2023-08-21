@@ -8,6 +8,8 @@ import (
 
 var addr *string
 
+var log = logger.New()
+
 func init() {
 	addr = flag.String("a", "localhost:8080", "endpoint start server")
 }
@@ -21,7 +23,7 @@ func NewConfig() *Config {
 	//initLogger()
 	err := env.Parse(&cfg)
 	if err != nil {
-		logger.Log.Debugf("read env error=%v", err)
+		log.Debugf("read env error=%v", err)
 	}
 	if cfg.Addr != "" {
 		return &cfg

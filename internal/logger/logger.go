@@ -5,23 +5,38 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"os"
+	"sync"
 )
 
-var Log *zap.SugaredLogger
+var logger *zap.SugaredLogger
+var once sync.Once
 
-func init() {
-	file, err := os.ReadFile("config/config.json")
-	if err != nil {
-		log.Fatal("ERROR")
-	}
-	var cfg zap.Config
+func New() *zap.SugaredLogger {
 
-	if err := json.Unmarshal(file, &cfg); err != nil {
-		log.Fatal(err)
-	}
-	l, err := cfg.Build()
-	Log = l.Sugar()
-	if err != nil {
-		log.Fatal(err)
-	}
+	once.Do(func() {
+		file, err := os.ReadFile("config/config.json")
+		if err != nil {
+			log.Println(err)
+			l, err := zap.NewDevelopment()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			logger = l.Sugar()
+			return
+		}
+
+		var cfg zap.Config
+
+		if err := json.Unmarshal(file, &cfg); err != nil {
+			log.Fatal(err)
+		}
+		l, err := cfg.Build()
+		logger = l.Sugar()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+	return logger
 }

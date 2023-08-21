@@ -6,9 +6,11 @@ import (
 	"github.com/zelas91/metric-collector/internal/logger"
 )
 
+var log = logger.New()
+
 func NewErrorResponse(c *gin.Context, statusCode int, message string) {
 	if err := c.AbortWithError(statusCode, errors.New(message)); err != nil {
-		logger.Log.Debugf("Error request status code = %d , error=%v", statusCode, err)
+		log.Debugf("Error request status code = %d , error=%v", statusCode, err)
 	}
 
 }

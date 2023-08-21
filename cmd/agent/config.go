@@ -11,6 +11,8 @@ var addr *string
 var pollInterval *int
 var reportInterval *int
 
+var log = logger.New()
+
 func init() {
 	addr = flag.String("a", "localhost:8080", "endpoint start server")
 	pollInterval = flag.Int("p", 2, " poll interval ")
@@ -28,7 +30,7 @@ func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		logger.Log.Debugf("read env error=%v", err)
+		log.Debugf("read env error=%v", err)
 	}
 	flag.Parse()
 	if cfg.BaseURL == "" {

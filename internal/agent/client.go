@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var log = logger.New()
+
 type ClientHTTP struct {
 	Client *resty.Client
 }
@@ -69,7 +71,7 @@ func Run(pollInterval, reportInterval int, baseURL string) {
 			case <-tickerReport.C:
 				err := c.UpdateMetrics(s, baseURL)
 				if err != nil {
-					logger.Log.Debug(err)
+					log.Debug(err)
 				}
 			case <-tickerPoll.C:
 				s.ReadStats()
