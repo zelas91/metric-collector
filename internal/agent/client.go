@@ -61,19 +61,21 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) 
 	defer tickerReport.Stop()
 	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
 	defer tickerPoll.Stop()
-	for {
-		select {
-		case <-tickerReport.C:
-			err := c.UpdateMetrics(s, baseURL)
-			if err != nil {
-				log.Debug(err)
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-tickerReport.C:
+				err := c.UpdateMetrics(s, baseURL)
+				if err != nil {
+					log.Debug(err)
+				}
+			case <-tickerPoll.C:
+				s.ReadStats()
+			case <-ctx.Done():
+				return
 			}
-		case <-tickerPoll.C:
-			s.ReadStats()
-		case <-ctx.Done():
-			return
 		}
-	}
+	}(ctx)
 }
 
 //

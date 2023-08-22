@@ -12,8 +12,7 @@ var logger *zap.SugaredLogger
 var once sync.Once
 
 func Shutdown() {
-	err := logger.Sync()
-	if err != nil {
+	if err := logger.Sync(); err != nil {
 		log.Fatal(err)
 	}
 }
