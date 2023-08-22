@@ -54,14 +54,15 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 }
 
 func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) {
-	s := NewStats()
-	c := NewClientHTTP()
-
-	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
-	defer tickerReport.Stop()
-	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
-	defer tickerPoll.Stop()
 	go func(ctx context.Context) {
+		s := NewStats()
+		c := NewClientHTTP()
+
+		tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
+		defer tickerReport.Stop()
+		tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
+		defer tickerPoll.Stop()
+
 		for {
 			select {
 			case <-tickerReport.C:
