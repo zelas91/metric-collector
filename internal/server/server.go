@@ -20,7 +20,7 @@ func Run(endpointServer string) {
 	}
 	go func() {
 		err := serv.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil {
 			log.Fatal(err)
 		}
 	}()

@@ -13,7 +13,6 @@ func main() {
 	conf := NewConfig()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	_ = cancel
-
 	server.Run(conf.Addr)
 	<-ctx.Done()
 	stop(ctx)
