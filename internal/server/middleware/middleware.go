@@ -21,6 +21,7 @@ func WithLogging(c *gin.Context) {
 		"status", c.Writer.Status(),
 		"duration", duration,
 		"size", c.Writer.Size(),
+		"Content-Type", c.GetHeader("Content-Type"),
 	)
 }
 

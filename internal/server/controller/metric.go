@@ -107,6 +107,14 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	}
 }
 
+func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
+
+}
+
+func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
+
+}
+
 func checkValid(typ, value string) bool {
 	if !isValue(value) || !isType(typ) {
 		return false

@@ -15,8 +15,10 @@ func (h *MetricHandler) InitRoutes() *gin.Engine {
 	{
 		update.Use(middleware.SetContextPlain)
 		update.POST("/:type/:name/:value", h.AddMetric)
+		update.POST("/", h.AddMetricJSON)
 		value.Use(middleware.SetContextPlain)
 		value.GET("/:type/:name", h.GetMetric)
+		value.POST("/", h.GetMetricJSON)
 	}
 	return router
 }
