@@ -13,7 +13,7 @@ var once sync.Once
 
 func Shutdown() {
 	if err := logger.Sync(); err != nil {
-		log.Fatalf("logger sync %v", err)
+		log.Printf("logger sync %v", err)
 	}
 }
 func New() *zap.SugaredLogger {

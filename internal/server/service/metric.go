@@ -14,11 +14,11 @@ import (
 var log = logger.New()
 
 type MemService struct {
-	repo repository.MemRepository
+	Repo repository.MemRepository
 }
 
 func NewMetricsService(repo repository.MemRepository) *MemService {
-	return &MemService{repo: repo}
+	return &MemService{Repo: repo}
 }
 
 func (s *MemService) AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, error) {
@@ -40,19 +40,19 @@ func (s *MemService) AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, e
 	}
 }
 func (s *MemService) addMetricGaugeSON(name string, value float64) float64 {
-	return s.repo.AddMetricGauge(name, value)
+	return s.Repo.AddMetricGauge(name, value)
 }
 
 func (s *MemService) addMetricCounterJSON(name string, value int64) int64 {
-	return s.repo.AddMetricCounter(name, value)
+	return s.Repo.AddMetricCounter(name, value)
 }
 
 func (s *MemService) GetMetrics() (map[string]types.MetricTypeValue, error) {
-	gauge, err := s.repo.GetByType(types.GaugeType)
+	gauge, err := s.Repo.GetByType(types.GaugeType)
 	if err != nil {
 		return nil, fmt.Errorf("internal server error. %v", err)
 	}
-	counter, err := s.repo.GetByType(types.CounterType)
+	counter, err := s.Repo.GetByType(types.CounterType)
 	if err != nil {
 		return nil, fmt.Errorf("internal server error. %v", err)
 	}
@@ -68,7 +68,7 @@ func (s *MemService) GetMetrics() (map[string]types.MetricTypeValue, error) {
 }
 
 func (s *MemService) GetMetric(name, t string) (types.MetricTypeValue, error) {
-	val := s.repo.ReadMetric(name, t)
+	val := s.Repo.ReadMetric(name, t)
 	if val == nil {
 		return nil, fmt.Errorf(" not found metrics  name=%s , type=%s , val = %v", name, t, val)
 	}
@@ -86,13 +86,13 @@ func (s *MemService) AddMetric(name, t string, value string) error {
 		if err != nil {
 			return fmt.Errorf("convert string to int64 error=%v", err)
 		}
-		s.repo.AddMetricCounter(name, val)
+		s.Repo.AddMetricCounter(name, val)
 	case types.GaugeType:
 		val, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return fmt.Errorf("convert string to int64 error=%v", err)
 		}
-		s.repo.AddMetricGauge(name, val)
+		s.Repo.AddMetricGauge(name, val)
 	}
 	return nil
 }
