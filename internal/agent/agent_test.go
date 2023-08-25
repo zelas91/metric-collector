@@ -38,7 +38,7 @@ func TestGetCounters(t *testing.T) {
 	counters := stats.GetCounters()
 
 	expectedCounters := map[string]types.Counter{
-		"PoolCounter": types.Counter(stats.PollCount),
+		"PollCount": types.Counter(stats.PollCount),
 	}
 
 	for key, expectedValue := range expectedCounters {
