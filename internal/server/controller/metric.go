@@ -99,11 +99,10 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	val, err := h.MemService.GetMetric(request.ID, request.MType)
 	if err != nil {
 		log.Debugf("get metric error=%v ", err)
-		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		payload.NewErrorResponseJSON(c, http.StatusNotFound, err.Error())
 		return
 	}
 	result := payload.Metrics{
