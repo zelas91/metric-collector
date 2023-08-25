@@ -50,11 +50,12 @@ func (s *Stats) GetGauges() map[string]types.Gauge {
 		"Sys":           types.Gauge(s.Sys),
 		"TotalAlloc":    types.Gauge(s.TotalAlloc),
 		"RandomValue":   types.Gauge(s.RandomValue),
+		"Frees":         types.Gauge(s.Frees),
 	}
 }
 
 func (s *Stats) GetCounters() map[string]types.Counter {
 	return map[string]types.Counter{
-		"PoolCounter": types.Counter(s.PollCount),
+		"PollCount": types.Counter(s.PollCount),
 	}
 }

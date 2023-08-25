@@ -101,7 +101,7 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	}
 	val, err := h.MemService.GetMetric(request.ID, request.MType)
 	if err != nil {
-		log.Debugf("get metric error=%v ", err)
+		log.Debugf("get metric=%v error=%v ", request, err)
 		payload.NewErrorResponseJSON(c, http.StatusNotFound, err.Error())
 		return
 	}
