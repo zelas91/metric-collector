@@ -3,7 +3,6 @@ package storages
 import (
 	"fmt"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"strings"
 )
 
 type MemStorage struct {
@@ -11,19 +10,21 @@ type MemStorage struct {
 	Counter map[string]types.MetricTypeValue //name , type , value
 }
 
-func (m *MemStorage) AddMetric(name, typeMetric string, value float64) {
-	switch strings.ToLower(typeMetric) {
-	case types.CounterType:
-		existingValue, ok := m.Counter[name]
-		if ok {
-			newValue := types.Counter(value) + (existingValue.(types.Counter))
-			m.Counter[name] = newValue
-		} else {
-			m.Counter[name] = types.Counter(value)
-		}
-	case types.GaugeType:
-		m.Gauge[name] = types.Gauge(value)
+func (m *MemStorage) AddMetricGauge(name string, value float64) float64 {
+	m.Gauge[name] = types.Gauge(value)
+	return value
+}
+
+func (m *MemStorage) AddMetricCounter(name string, value int64) int64 {
+	existingValue, ok := m.Counter[name]
+	if ok {
+		newValue := types.Counter(value) + (existingValue.(types.Counter))
+		m.Counter[name] = newValue
+	} else {
+		m.Counter[name] = types.Counter(value)
 	}
+
+	return int64(m.Counter[name].(types.Counter))
 }
 
 func (m *MemStorage) ReadMetric(name string, t string) types.MetricTypeValue {

@@ -2,10 +2,12 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"time"
 )
@@ -24,11 +26,19 @@ func NewClientHTTP() *ClientHTTP {
 
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	for name, value := range s.GetGauges() {
-		resp, err := c.Client.R().SetPathParams(map[string]string{
-			"type":  types.GaugeType,
-			"name":  name,
-			"value": fmt.Sprintf("%f", value),
-		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
+		val := float64(value)
+		body, err := json.Marshal(payload.Metrics{
+			ID:    name,
+			MType: types.GaugeType,
+			Value: &val,
+		})
+		if err != nil {
+			return fmt.Errorf("json marshal eroor = %v", err)
+		}
+		resp, err := c.Client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(body).
+			Post(baseURL)
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
 		}
@@ -38,11 +48,19 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	}
 
 	for name, value := range s.GetCounters() {
-		resp, err := c.Client.R().SetPathParams(map[string]string{
-			"type":  types.GaugeType,
-			"name":  name,
-			"value": fmt.Sprintf("%d", value),
-		}).SetHeader("Content-Type", "text/plain").Post(fmt.Sprintf("%s/{type}/{name}/{value}", baseURL))
+		val := int64(value)
+		body, err := json.Marshal(payload.Metrics{
+			ID:    name,
+			MType: types.CounterType,
+			Delta: &val,
+		})
+		if err != nil {
+			return fmt.Errorf("json marshal eroor = %v", err)
+		}
+		resp, err := c.Client.R().
+			SetBody(body).
+			SetHeader("Content-Type", "application/json").
+			Post(baseURL)
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
 		}

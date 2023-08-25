@@ -5,11 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
-	"github.com/zelas91/metric-collector/internal/server/repository"
+	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
 	"net/http"
-	"strconv"
 )
 
 var log = logger.New()
@@ -41,31 +40,28 @@ const (
 )
 
 type MetricHandler struct {
-	MemStore repository.MemRepository
+	MemService service.Service
 }
 
-func NewMetricHandler(memStore repository.MemRepository) *MetricHandler {
-	return &MetricHandler{MemStore: memStore}
+func NewMetricHandler(MemService service.Service) *MetricHandler {
+	return &MetricHandler{MemService: MemService}
 }
 func (h *MetricHandler) AddMetric(c *gin.Context) {
+	c.Header("Content-Type", "text/plain")
 	value := c.Param(paramValue)
 	t := c.Param(paramType)
-	if ok := checkValid(t, value); !ok {
-		payload.NewErrorResponse(c, http.StatusBadRequest, "not valid name or type ")
+	if err := h.MemService.AddMetric(c.Param(paramName), t, value); err != nil {
+		payload.NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	val, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		log.Debugf("convert string to int64 error=%v", err)
-	}
-	h.MemStore.AddMetric(c.Param(paramName), t, val)
 }
 
 func (h *MetricHandler) GetMetric(c *gin.Context) {
+	c.Header("Content-Type", "text/plain")
 	t := c.Param(paramType)
 	name := c.Param(paramName)
-	result := h.MemStore.ReadMetric(name, t)
-	if result == nil {
+	result, err := h.MemService.GetMetric(name, t)
+	if err != nil {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 		return
 	}
@@ -76,31 +72,16 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 }
 
 func (h *MetricHandler) GetMetrics(c *gin.Context) {
+	c.Header("Content-Type", "text/html")
 	body, err := template.New("test").Parse(templateHTML)
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-
-	gauge, err := h.MemStore.GetByType(types.GaugeType)
+	arraysMetric, err := h.MemService.GetMetrics()
 	if err != nil {
-		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 	}
-	counter, err := h.MemStore.GetByType(types.CounterType)
-	if err != nil {
-		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
-		return
-	}
-	arraysMetric := make(map[string]types.MetricTypeValue, len(gauge)+len(counter))
-
-	for key, value := range gauge {
-		arraysMetric[key] = value
-	}
-	for key, value := range counter {
-		arraysMetric[key] = value
-	}
-
 	if err = body.Execute(c.Writer, arraysMetric); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -108,35 +89,54 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 }
 
 func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
+	if c.GetHeader("Content-Type") != "application/json" {
+		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
+		return
+	}
+	var request payload.Metrics
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Debugf("bind json  json error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		return
+	}
 
+	val, err := h.MemService.GetMetric(request.ID, request.MType)
+	if err != nil {
+		log.Debugf("get metric error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	result := payload.Metrics{
+		ID:    request.ID,
+		MType: request.MType,
+	}
+	switch request.MType {
+	case types.CounterType:
+		delta := int64(val.(types.Counter))
+		result.Delta = &delta
+	case types.GaugeType:
+		value := float64(val.(types.Gauge))
+		result.Value = &value
+	}
+	c.AbortWithStatusJSON(http.StatusOK, result)
 }
 
 func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
-
-}
-
-func checkValid(typ, value string) bool {
-	if !isValue(value) || !isType(typ) {
-		return false
+	if c.GetHeader("Content-Type") != "application/json" {
+		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
+		return
 	}
-	return true
-}
-func isValue(value string) bool {
-	_, err := strconv.ParseFloat(value, 64)
+	var request payload.Metrics
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Debugf("bind json  error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	res, err := h.MemService.AddMetricsJSON(request)
 	if err != nil {
-		log.Debugf("not valid value=%s, error=%v", value, err)
+		log.Debugf("add metric json error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		return
 	}
-	return err == nil
-}
-
-func isType(mType string) bool {
-	switch mType {
-
-	case types.CounterType:
-	case types.GaugeType:
-	default:
-		return false
-	}
-	return true
-
+	c.AbortWithStatusJSON(http.StatusOK, res)
 }
