@@ -31,7 +31,7 @@ func (s *MemService) AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, e
 		return &payload.Metrics{ID: metric.ID, MType: metric.MType, Delta: &val}, nil
 	case types.GaugeType:
 		if metric.Value == nil {
-			return nil, errors.New("counter delta not found")
+			return nil, errors.New("gauge value not found")
 		}
 		val := s.addMetricGaugeSON(metric.ID, *metric.Value)
 		return &payload.Metrics{ID: metric.ID, MType: metric.MType, Value: &val}, nil
