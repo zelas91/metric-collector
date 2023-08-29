@@ -125,6 +125,7 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
 		return
 	}
+
 	var request payload.Metrics
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Debugf("bind json  error=%v ", err)

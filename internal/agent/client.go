@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -32,12 +34,18 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			MType: types.GaugeType,
 			Value: &val,
 		})
+
 		if err != nil {
 			return fmt.Errorf("json marshal eroor = %v", err)
 		}
+		gzipBody, err := gzipCompress(body)
+		if err != nil {
+			log.Debug("error compress body %v", err)
+		}
 		resp, err := c.Client.R().
 			SetHeader("Content-Type", "application/json").
-			SetBody(body).
+			SetHeader("Content-Encoding", "gzip").
+			SetBody(gzipBody).
 			Post(baseURL)
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
@@ -57,9 +65,15 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		if err != nil {
 			return fmt.Errorf("json marshal eroor = %v", err)
 		}
+
+		gzipBody, err := gzipCompress(body)
+		if err != nil {
+			log.Debug("error compress body %v", err)
+		}
 		resp, err := c.Client.R().
-			SetBody(body).
+			SetBody(gzipBody).
 			SetHeader("Content-Type", "application/json").
+			SetHeader("Content-Encoding", "gzip").
 			Post(baseURL)
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
@@ -69,6 +83,22 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		}
 	}
 	return nil
+}
+func gzipCompress(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	w, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, fmt.Errorf("gzip Compress error=%v", err)
+	}
+	_, err = w.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to gzip : %v", err)
+
+	}
+	if err = w.Close(); err != nil {
+		return nil, fmt.Errorf("gzip writer close error : %v", err)
+	}
+	return buf.Bytes(), err
 }
 
 func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) {

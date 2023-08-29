@@ -1,15 +1,20 @@
 package middleware
 
 import (
-	"compress/zlib"
+	"compress/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
-	"io"
 	"strings"
+	"sync"
 	"time"
 )
 
 var log = logger.New()
+var gzipWritePool = &sync.Pool{
+	New: func() interface{} {
+		return gzip.NewWriter(nil)
+	},
+}
 
 func WithLogging(c *gin.Context) {
 	start := time.Now()
@@ -38,35 +43,58 @@ func SetContextHTML(c *gin.Context) {
 	c.Next()
 }
 
-func GzipMiddleware(c *gin.Context) {
-	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "deflate") {
+func GzipCompress(c *gin.Context) {
+
+	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
 		c.Next()
 		return
 	}
 
-	writer, _ := zlib.NewWriterLevel(c.Writer, zlib.BestCompression)
+	writer := getGzipWriter()
+	defer releaseGzipWriter(writer)
+	writer.Reset(c.Writer)
+	c.Writer = &gzipWriter{writer, c.Writer}
 
-	defer func(writer *zlib.Writer) {
-		if err := writer.Close(); err != nil {
-			log.Debugf("close gzip writer error=%v", err)
-		}
-	}(writer)
-
-	c.Writer = &zlibWriter{writer, c.Writer}
-	c.Header("Content-Encoding", "deflate")
+	c.Header("Content-Encoding", "gzip")
 
 	c.Next()
 }
 
-type zlibWriter struct {
-	writer *zlib.Writer
+type gzipWriter struct {
+	writer *gzip.Writer
 	gin.ResponseWriter
 }
 
-func (gw *zlibWriter) Write(data []byte) (int, error) {
+func (gw *gzipWriter) Write(data []byte) (int, error) {
+
 	return gw.writer.Write(data)
 }
 
-func (gw *zlibWriter) WriteString(s string) (int, error) {
-	return io.WriteString(gw.writer, s)
+func getGzipWriter() *gzip.Writer {
+	if v := gzipWritePool.Get(); v != nil {
+		return v.(*gzip.Writer)
+	}
+	writer, err := gzip.NewWriterLevel(nil, gzip.BestCompression)
+	if err != nil {
+		log.Info("Failed to create gzip writer:", err)
+		return nil
+	}
+
+	return writer
+}
+func releaseGzipWriter(writer *gzip.Writer) {
+	defer func(w *gzip.Writer) {
+		if err := writer.Close(); err != nil {
+			log.Debug("Failed to close gzip writer:", err)
+		}
+	}(writer)
+	gzipWritePool.Put(writer)
+}
+func GzipDecompress(c *gin.Context) {
+	if c.Request.Header.Get("Content-Encoding") == "gzip" {
+		c.Request.Body, _ = gzip.NewReader(c.Request.Body)
+		c.Request.Header.Del("Content-Encoding")
+		c.Request.Header.Del("Content-Length")
+	}
+	c.Next()
 }
