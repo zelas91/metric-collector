@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/storages"
@@ -14,11 +15,12 @@ import (
 
 var serv *http.Server
 
-func Run(endpointServer string) {
+func Run() {
+	cfg := config.NewConfig()
 	gin.SetMode(gin.ReleaseMode)
-	metric := controller.NewMetricHandler(service.NewMetricsService(storages.NewMemStorage()))
+	metric := controller.NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(cfg)))
 	serv = &http.Server{
-		Addr:    endpointServer,
+		Addr:    *cfg.Addr,
 		Handler: metric.InitRoutes(), // Ваш обработчик запросов
 	}
 	go func() {

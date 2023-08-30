@@ -1,6 +1,8 @@
 package repository
 
-import "github.com/zelas91/metric-collector/internal/server/types"
+import (
+	"github.com/zelas91/metric-collector/internal/server/types"
+)
 
 type MemRepository interface {
 	AddMetricGauge(name string, value float64) float64

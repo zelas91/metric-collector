@@ -10,10 +10,9 @@ import (
 )
 
 func main() {
-	conf := NewConfig()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	_ = cancel
-	server.Run(conf.Addr)
+	server.Run()
 	<-ctx.Done()
 	stop(ctx)
 }

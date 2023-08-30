@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -11,10 +12,13 @@ import (
 	"strings"
 )
 
-var log = logger.New()
+var (
+	log = logger.New()
+)
 
 type MemService struct {
 	Repo repository.MemRepository
+	cfg  *config.Config
 }
 
 func NewMetricsService(repo repository.MemRepository) *MemService {
@@ -33,13 +37,13 @@ func (s *MemService) AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, e
 		if metric.Value == nil {
 			return nil, errors.New("gauge value not found")
 		}
-		val := s.addMetricGaugeSON(metric.ID, *metric.Value)
+		val := s.addMetricGaugeJSON(metric.ID, *metric.Value)
 		return &payload.Metrics{ID: metric.ID, MType: metric.MType, Value: &val}, nil
 	default:
 		return nil, errors.New("type mem error")
 	}
 }
-func (s *MemService) addMetricGaugeSON(name string, value float64) float64 {
+func (s *MemService) addMetricGaugeJSON(name string, value float64) float64 {
 	return s.Repo.AddMetricGauge(name, value)
 }
 

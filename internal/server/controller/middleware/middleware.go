@@ -9,12 +9,14 @@ import (
 	"time"
 )
 
-var log = logger.New()
-var gzipWritePool = &sync.Pool{
-	New: func() interface{} {
-		return gzip.NewWriter(nil)
-	},
-}
+var (
+	log           = logger.New()
+	gzipWritePool = &sync.Pool{
+		New: func() interface{} {
+			return gzip.NewWriter(nil)
+		},
+	}
+)
 
 func WithLogging(c *gin.Context) {
 	start := time.Now()
@@ -22,7 +24,6 @@ func WithLogging(c *gin.Context) {
 	c.Next()
 
 	duration := time.Since(start)
-
 	log.Infoln(
 		"uri", c.Request.RequestURI,
 		"method", c.Request.Method,
@@ -31,16 +32,6 @@ func WithLogging(c *gin.Context) {
 		"size", c.Writer.Size(),
 		"Content-Type", c.GetHeader("Content-Type"),
 	)
-}
-
-func SetContextPlain(c *gin.Context) {
-	c.Header("Content-Type", "text/plain")
-	c.Next()
-}
-
-func SetContextHTML(c *gin.Context) {
-	c.Header("Content-Type", "text/html")
-	c.Next()
 }
 
 func GzipCompress(c *gin.Context) {

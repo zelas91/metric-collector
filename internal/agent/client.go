@@ -28,6 +28,7 @@ func NewClientHTTP() *ClientHTTP {
 
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	for name, value := range s.GetGauges() {
+		log.Infof("get metrics agent name=%s, value=%f", name, value)
 		val := float64(value)
 		body, err := json.Marshal(payload.Metrics{
 			ID:    name,
@@ -126,36 +127,3 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) 
 		}
 	}(ctx)
 }
-
-//
-//func Run(pollInterval, reportInterval int, baseURL string) {
-//	s := NewStats()
-//	c := NewClientHTTP()
-//	sigChan := make(chan os.Signal, 1)
-//	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
-//	go func() {
-//		poll := time.Now().Add(time.Duration(pollInterval) * time.Second)
-//		report := time.Now().Add(time.Duration(reportInterval) * time.Second)
-//
-//		for {
-//
-//			if time.Now().After(poll) {
-//				poll = time.Now().Add(time.Duration(reportInterval) * time.Second)
-//				s.ReadStats()
-//			}
-//
-//			if time.Now().After(report) {
-//				report = time.Now().Add(time.Duration(reportInterval) * time.Second)
-//				err := c.UpdateMetrics(s, baseURL)
-//				if err != nil {
-//					logrus.Debug(err)
-//				}
-//			}
-//
-//			time.Sleep(500 * time.Microsecond)
-//
-//		}
-//
-//	}()
-//	<-sigChan
-//}
