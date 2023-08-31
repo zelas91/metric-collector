@@ -40,17 +40,17 @@ const (
 )
 
 type MetricHandler struct {
-	MemService service.Service
+	memService service.Service
 }
 
-func NewMetricHandler(MemService service.Service) *MetricHandler {
-	return &MetricHandler{MemService: MemService}
+func NewMetricHandler(memService service.Service) *MetricHandler {
+	return &MetricHandler{memService: memService}
 }
 func (h *MetricHandler) AddMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	value := c.Param(paramValue)
 	t := c.Param(paramType)
-	if err := h.MemService.AddMetric(c.Param(paramName), t, value); err != nil {
+	if err := h.memService.AddMetric(c.Param(paramName), t, value); err != nil {
 		payload.NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -60,8 +60,8 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	t := c.Param(paramType)
 	name := c.Param(paramName)
-	result, err := h.MemService.GetMetric(name, t)
-	if err != nil {
+	result := h.memService.GetMetric(name, t)
+	if result == nil {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 		return
 	}
@@ -78,7 +78,7 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	arraysMetric, err := h.MemService.GetMetrics()
+	arraysMetric, err := h.memService.GetMetrics()
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 	}
@@ -99,24 +99,30 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	val, err := h.MemService.GetMetric(request.ID, request.MType)
-	if err != nil {
-		log.Debugf("get metric=%v error=%v ", request, err)
-		payload.NewErrorResponseJSON(c, http.StatusNotFound, err.Error())
-		return
-	}
+	val := h.memService.GetMetric(request.ID, request.MType)
+
 	result := payload.Metrics{
 		ID:    request.ID,
 		MType: request.MType,
 	}
+
 	switch request.MType {
 	case types.CounterType:
-		delta := int64(val.(types.Counter))
-		result.Delta = &delta
+		if val != nil {
+			delta := int64(val.(types.Counter))
+			result.Delta = &delta
+		} else {
+			result.Delta = new(int64)
+		}
 	case types.GaugeType:
-		value := float64(val.(types.Gauge))
-		result.Value = &value
+		if val != nil {
+			value := float64(val.(types.Gauge))
+			result.Value = &value
+		} else {
+			result.Value = new(float64)
+		}
 	}
+
 	c.AbortWithStatusJSON(http.StatusOK, result)
 }
 
@@ -132,7 +138,7 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	res, err := h.MemService.AddMetricsJSON(request)
+	res, err := h.memService.AddMetricsJSON(request)
 	if err != nil {
 		log.Debugf("add metric json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())

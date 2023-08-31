@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/payload"
+	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
-	"github.com/zelas91/metric-collector/internal/server/storages"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"io"
 	"net/http"
@@ -29,14 +30,14 @@ func TestAddMetric(t *testing.T) {
 	}{
 		{
 			name:    "Bad request #1",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{})),
 			url:     "/update/unknown/testCounter/100",
 			method:  http.MethodPost,
 			want:    want{code: 400, body: ""},
 		},
 		{
 			name:    "Ok #3",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: 200, body: ""},
 			url:     "/update/counter/someMetric/527",
 			method:  http.MethodPost,
@@ -65,14 +66,12 @@ func TestAddMetric(t *testing.T) {
 
 }
 func TestGetMetric(t *testing.T) {
-	handler := &MetricHandler{MemService: &service.MemService{Repo: &storages.MemStorage{Gauge: map[string]types.MetricTypeValue{
-		"cpu":    types.Gauge(0.85),
-		"memory": types.Gauge(0.6),
-	},
-		Counter: map[string]types.MetricTypeValue{
-			"requests": types.Counter(100),
-			"errors":   types.Counter(5),
-		}}}}
+	serv := service.NewMetricsService(repository.NewMemStorage(), &config.Config{})
+	_ = serv.AddMetric("cpu", types.GaugeType, "0.85")
+	_ = serv.AddMetric("memory", types.GaugeType, "0.6")
+	_ = serv.AddMetric("requests", types.CounterType, "100")
+	_ = serv.AddMetric("errors", types.CounterType, "5")
+	handler := NewMetricHandler(serv)
 	tests := []struct {
 		name string
 		want int
@@ -122,7 +121,7 @@ func TestAddMetricJSON(t *testing.T) {
 	}{
 		{
 			name:    "StatusUnsupportedMediaType #1",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{})),
 			url:     "/update/",
 			body: payload.Metrics{
 				ID: "Test",
@@ -133,7 +132,7 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Ok  gauge #2",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: http.StatusOK, body: "{\"id\":\"Test\",\"type\":\"gauge\",\"value\":20.12}"},
 			url:     "/update/",
 			body: payload.Metrics{
@@ -146,7 +145,7 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Bad request  #3",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: http.StatusBadRequest, body: "{\"message\":\"counter delta not found\"}"},
 			url:     "/update/",
 			body: payload.Metrics{
@@ -184,14 +183,12 @@ func TestAddMetricJSON(t *testing.T) {
 	}
 }
 func TestGetMetricJSON(t *testing.T) {
-	handler := &MetricHandler{MemService: &service.MemService{Repo: &storages.MemStorage{Gauge: map[string]types.MetricTypeValue{
-		"cpu":    types.Gauge(0.85),
-		"memory": types.Gauge(0.6),
-	},
-		Counter: map[string]types.MetricTypeValue{
-			"requests": types.Counter(100),
-			"errors":   types.Counter(5),
-		}}}}
+	serv := service.NewMetricsService(repository.NewMemStorage(), &config.Config{})
+	_ = serv.AddMetric("cpu", types.GaugeType, "0.85")
+	_ = serv.AddMetric("memory", types.GaugeType, "0.6")
+	_ = serv.AddMetric("requests", types.CounterType, "100")
+	_ = serv.AddMetric("errors", types.CounterType, "5")
+	handler := NewMetricHandler(serv)
 	type result struct {
 		statusCode int
 		body       string
@@ -221,8 +218,8 @@ func TestGetMetricJSON(t *testing.T) {
 		{
 			name: "Get not found",
 			want: result{
-				statusCode: http.StatusNotFound,
-				body:       "{\"message\":\" not found metrics  name=cpuz , type=gauge , val = \\u003cnil\\u003e\"}",
+				statusCode: http.StatusOK,
+				body:       "{\"id\":\"cpuz\",\"type\":\"gauge\",\"value\":0}",
 			},
 			body: payload.Metrics{
 				ID:    "cpuz",
