@@ -22,7 +22,7 @@ type ClientHTTP struct {
 
 func NewClientHTTP() *ClientHTTP {
 	client := resty.New()
-	client.SetTimeout(1 * time.Second)
+	client.SetTimeout(5 * time.Second)
 	return &ClientHTTP{Client: client}
 }
 
@@ -40,7 +40,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		}
 		gzipBody, err := gzipCompress(body)
 		if err != nil {
-			log.Debug("error compress body %v", err)
+			return err
 		}
 		resp, err := c.Client.R().
 			SetHeader("Content-Type", "application/json").
@@ -48,7 +48,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			SetBody(gzipBody).
 			Post(baseURL)
 		if err != nil {
-			return fmt.Errorf("error post request %v", err)
+			return fmt.Errorf("51 error post request %v , body=%s , resp=%v", err, string(body), resp)
 		}
 		if resp.StatusCode() != 200 {
 			return errors.New("answer result is not correct")
@@ -68,7 +68,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 
 		gzipBody, err := gzipCompress(body)
 		if err != nil {
-			log.Debug("error compress body %v", err)
+			return err
 		}
 		resp, err := c.Client.R().
 			SetBody(gzipBody).
@@ -76,7 +76,7 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 			SetHeader("Content-Encoding", "gzip").
 			Post(baseURL)
 		if err != nil {
-			return fmt.Errorf("error post request %v", err)
+			return fmt.Errorf("79 error post request %v , body=%s", err, string(body))
 		}
 		if resp.StatusCode() != 200 {
 			return errors.New("answer result is not correct")
@@ -94,6 +94,9 @@ func gzipCompress(data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to gzip : %v", err)
 
+	}
+	if err = w.Flush(); err != nil {
+		return nil, fmt.Errorf("flush %v", err)
 	}
 	if err = w.Close(); err != nil {
 		return nil, fmt.Errorf("gzip writer close error : %v", err)
