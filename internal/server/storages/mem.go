@@ -25,7 +25,9 @@ type MemStorage struct {
 func NewMemStorage(config *config.Config) *MemStorage {
 	cfg = config
 	if *cfg.Restore {
-		return readMetricsDB()
+		if mem := readMetricsDB(); mem != nil {
+			return mem
+		}
 	}
 
 	return &MemStorage{Gauge: make(map[string]types.MetricTypeValue),
@@ -127,14 +129,16 @@ func (m *MemStorage) saveMetric() {
 func readMetricsDB() *MemStorage {
 	data, err := os.ReadFile("metrics-db.json")
 	if err != nil {
-		log.Fatalf("read file err: %v", err)
+		log.Debugf("read file err: %v", err)
+		return nil
 	}
 
 	var mem *MemStorage
 
 	err = json.Unmarshal(data, &mem)
 	if err != nil {
-		log.Fatalf("ERROR UNMARSHAL %v", err)
+		log.Debugf("ERROR UNMARSHAL %v", err)
+		return nil
 	}
 	return mem
 }

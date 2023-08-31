@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/storages"
@@ -29,14 +30,14 @@ func TestAddMetric(t *testing.T) {
 	}{
 		{
 			name:    "Bad request #1",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(config.NewConfig()))),
 			url:     "/update/unknown/testCounter/100",
 			method:  http.MethodPost,
 			want:    want{code: 400, body: ""},
 		},
 		{
 			name:    "Ok #3",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(config.NewConfig()))),
 			want:    want{code: 200, body: ""},
 			url:     "/update/counter/someMetric/527",
 			method:  http.MethodPost,
@@ -122,7 +123,7 @@ func TestAddMetricJSON(t *testing.T) {
 	}{
 		{
 			name:    "StatusUnsupportedMediaType #1",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(config.NewConfig()))),
 			url:     "/update/",
 			body: payload.Metrics{
 				ID: "Test",
@@ -133,7 +134,7 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Ok  gauge #2",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(config.NewConfig()))),
 			want:    want{code: http.StatusOK, body: "{\"id\":\"Test\",\"type\":\"gauge\",\"value\":20.12}"},
 			url:     "/update/",
 			body: payload.Metrics{
@@ -146,7 +147,7 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Bad request  #3",
-			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage())),
+			handler: NewMetricHandler(service.NewMetricsService(storages.NewMemStorage(config.NewConfig()))),
 			want:    want{code: http.StatusBadRequest, body: "{\"message\":\"counter delta not found\"}"},
 			url:     "/update/",
 			body: payload.Metrics{
