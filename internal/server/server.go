@@ -15,9 +15,9 @@ import (
 
 var serv *http.Server
 
-func Run(cfg *config.Config) {
+func Run(cfg *config.Config, ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
-	metric := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), cfg))
+	metric := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), cfg, ctx))
 	serv = &http.Server{
 		Addr:    *cfg.Addr,
 		Handler: metric.InitRoutes(), // Ваш обработчик запросов

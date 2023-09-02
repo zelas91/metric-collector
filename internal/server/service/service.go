@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,14 +30,15 @@ var once sync.Once
 type MemService struct {
 	repo repository.MemRepository
 	cfg  *config.Config
+	ctx  context.Context
 }
 
-func NewMetricsService(repo repository.MemRepository, cfg *config.Config) *MemService {
+func NewMetricsService(repo repository.MemRepository, cfg *config.Config, ctx context.Context) *MemService {
 	mem := readMetricsDB(cfg)
 	if mem != nil {
-		return &MemService{repo: mem, cfg: cfg}
+		return &MemService{repo: mem, cfg: cfg, ctx: ctx}
 	}
-	return &MemService{repo: repo, cfg: cfg}
+	return &MemService{repo: repo, cfg: cfg, ctx: ctx}
 }
 
 func (s *MemService) AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, error) {
@@ -129,7 +131,7 @@ func checkValid(typ, value string) bool {
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		log.Debugf("not valid value=%s, error=%v", value, err)
+		log.Errorf("not valid value=%s, error=%v", value, err)
 	}
 	return err == nil
 }
@@ -156,25 +158,25 @@ func readMetricsDB(cfg *config.Config) *repository.MemStorage {
 	info, _ := file.Stat()
 	data := make([]byte, info.Size())
 	if err != nil {
-		log.Debugf("open file err: %v", err)
+		log.Errorf("open file err: %v", err)
 		return nil
 	}
 
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Debugf("file close err : %v", err)
+			log.Errorf("file close err : %v", err)
 			return
 		}
 	}()
 
 	if _, err := file.Read(data); err != nil {
-		log.Debugf("read file err: %v", err)
+		log.Errorf("read file err: %v", err)
 		return nil
 	}
 	var mem *repository.MemStorage
 
 	if err = json.Unmarshal(data, &mem); err != nil {
-		log.Debugf("read metrics db err: %v", err)
+		log.Errorf("read metrics db err: %v", err)
 		return nil
 	}
 	return mem
@@ -197,7 +199,7 @@ func (s *MemService) save() error {
 
 	defer func() {
 		if err := file.Close(); err != nil {
-			log.Debugf("file close err : %v", err)
+			log.Errorf("file close err : %v", err)
 			return
 		}
 	}()
@@ -213,10 +215,18 @@ func (s *MemService) asyncSave() {
 		go func() {
 			tickerStoreInterval := time.NewTicker(time.Duration(*s.cfg.StoreInterval) * time.Second)
 			for {
-				<-tickerStoreInterval.C
-				if err := s.save(); err != nil {
-					log.Debugf("save error %v", err)
+				select {
+				case <-tickerStoreInterval.C:
+					if err := s.save(); err != nil {
+						log.Errorf("save error %v", err)
+					}
+				case <-s.ctx.Done():
+					if err := s.save(); err != nil {
+						log.Errorf("save error %v", err)
+					}
+					return
 				}
+
 			}
 		}()
 	})
@@ -224,7 +234,7 @@ func (s *MemService) asyncSave() {
 
 func (s *MemService) syncSave() {
 	if err := s.save(); err != nil {
-		log.Debugf("save error %v", err)
+		log.Errorf("save error %v", err)
 		return
 	}
 }

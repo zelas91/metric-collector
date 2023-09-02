@@ -75,7 +75,7 @@ func getGzipWriter() *gzip.Writer {
 func releaseGzipWriter(writer *gzip.Writer) {
 	defer func(w *gzip.Writer) {
 		if err := writer.Close(); err != nil {
-			log.Debug("Failed to close gzip writer:", err)
+			log.Error("Failed to close gzip writer:", err)
 			return
 		}
 	}(writer)

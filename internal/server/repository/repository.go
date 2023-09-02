@@ -71,13 +71,11 @@ func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, erro
 	}
 }
 
-func (m *MemStorage) UnmarshalJSON(bytes []byte) error {
-	type memStorageAlias MemStorage
+func (m *MemStorage) UnmarshalJSON(bytes []byte) error { //
 	mem := &struct {
-		*memStorageAlias
 		Gauge   map[string]float64 `json:"gauge"`
 		Counter map[string]int64   `json:"counter"`
-	}{memStorageAlias: (*memStorageAlias)(m)}
+	}{}
 	if err := json.Unmarshal(bytes, mem); err != nil {
 		return err
 	}

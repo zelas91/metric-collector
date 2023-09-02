@@ -116,7 +116,7 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) 
 			case <-tickerReport.C:
 				err := c.UpdateMetrics(s, baseURL)
 				if err != nil {
-					log.Debug(err)
+					log.Error(err)
 				}
 			case <-tickerPoll.C:
 				s.ReadStats()

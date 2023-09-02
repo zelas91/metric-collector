@@ -13,7 +13,7 @@ func NewConfig() *config.Config {
 	var cfg config.Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Debugf("read env error=%v", err)
+		log.Errorf("read env error=%v", err)
 	}
 
 	if cfg.Addr == nil {

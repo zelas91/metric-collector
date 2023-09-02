@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/payload"
@@ -14,7 +15,7 @@ func TestAddMetricJSON(t *testing.T) {
 		excepted payload.Metrics
 		err      error
 	}
-	serv := NewMetricsService(repository.NewMemStorage(), &config.Config{})
+	serv := NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())
 	gaugeValue := 20.123
 	deltaValue := int64(200)
 	tests := []struct {

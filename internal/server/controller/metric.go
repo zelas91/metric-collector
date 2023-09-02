@@ -95,7 +95,7 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	}
 	var request payload.Metrics
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Debugf("bind json  json error=%v ", err)
+		log.Errorf("bind json  json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -134,13 +134,13 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 
 	var request payload.Metrics
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Debugf("bind json  error=%v ", err)
+		log.Errorf("bind json  error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
 	res, err := h.memService.AddMetricsJSON(request)
 	if err != nil {
-		log.Debugf("add metric json error=%v ", err)
+		log.Errorf("add metric json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}

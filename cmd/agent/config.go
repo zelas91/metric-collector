@@ -30,7 +30,7 @@ func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Debugf("read env error=%v", err)
+		log.Errorf("read env error=%v", err)
 	}
 	flag.Parse()
 	if cfg.BaseURL == "" {
