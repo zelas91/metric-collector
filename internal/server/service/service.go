@@ -221,9 +221,6 @@ func (s *MemService) asyncSave() {
 						log.Errorf("save error %v", err)
 					}
 				case <-s.ctx.Done():
-					if err := s.save(); err != nil {
-						log.Errorf("save error %v", err)
-					}
 					return
 				}
 
