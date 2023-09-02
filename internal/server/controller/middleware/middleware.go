@@ -33,16 +33,6 @@ func WithLogging(c *gin.Context) {
 	)
 }
 
-func SetContextPlain(c *gin.Context) {
-	c.Header("Content-Type", "text/plain")
-	c.Next()
-}
-
-func SetContextHTML(c *gin.Context) {
-	c.Header("Content-Type", "text/html")
-	c.Next()
-}
-
 func GzipCompress(c *gin.Context) {
 
 	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") &&

@@ -44,12 +44,5 @@ func NewConfig() *Config {
 		cfg.PollInterval = *pollInterval
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
-	//initLogger()
 	return &cfg
 }
-
-//func initLogger() {
-//	logrus.SetFormatter(new(logrus.JSONFormatter))
-//	logrus.SetLevel(logrus.DebugLevel)
-//	//logrus.SetReportCaller(true)
-//}
