@@ -35,9 +35,7 @@ func WithLogging(c *gin.Context) {
 
 func GzipCompress(c *gin.Context) {
 
-	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") &&
-		(strings.Contains(c.Request.Header.Get("Content-Type"), "application/json") ||
-			strings.Contains(c.Request.Header.Get("Content-Type"), "text/html")) {
+	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
 		c.Next()
 		return
 	}
