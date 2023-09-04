@@ -8,6 +8,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/golang/mock v1.6.0
 	go.uber.org/zap v1.25.0
 )
 
@@ -38,7 +39,6 @@ require (
 	golang.org/x/net v0.13.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
+	mock "github.com/zelas91/metric-collector/internal/server/repository/mocks"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"testing"
 )
@@ -120,4 +123,16 @@ func TestIsValue(t *testing.T) {
 			assert.Equal(t, test.want, isValue(test.value))
 		})
 	}
+}
+
+func TestAddMetricGaugeMock(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	memStorage := mock.NewMockMemRepository(ctrl)
+	memStorage.EXPECT().AddMetricCounter("test", int64(20)).Return(int64(20))
+	memStorage.EXPECT().GetByType("gauge").Return(map[string]types.MetricTypeValue{"test3": types.Gauge(15.7)}, nil)
+	memStorage.EXPECT().GetByType("counter").Return(map[string]types.MetricTypeValue{"test4": types.Counter(15)}, nil)
+	serv := NewMetricsService(memStorage, &config.Config{}, context.Background())
+	fmt.Println(serv.GetMetrics())
+	fmt.Println(serv.AddMetric("test", "counter", "20"))
 }

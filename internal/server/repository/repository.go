@@ -6,7 +6,7 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/types"
 )
 
-//go:generate mockgen -package mocks -destination=./mocks/mock_communicator.go -source=repository.go
+//go:generate mockgen -package mocks -destination=./mocks/mock_repository.go -source=repository.go -package=mock MemRepository
 type MemRepository interface {
 	AddMetricGauge(name string, value float64) float64
 	AddMetricCounter(name string, value int64) int64
