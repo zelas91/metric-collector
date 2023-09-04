@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
@@ -10,6 +10,7 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	mock "github.com/zelas91/metric-collector/internal/server/repository/mocks"
 	"github.com/zelas91/metric-collector/internal/server/types"
+	"strconv"
 	"testing"
 )
 
@@ -126,13 +127,67 @@ func TestIsValue(t *testing.T) {
 }
 
 func TestAddMetricGaugeMock(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	memStorage := mock.NewMockMemRepository(ctrl)
-	memStorage.EXPECT().AddMetricCounter("test", int64(20)).Return(int64(20))
-	memStorage.EXPECT().GetByType("gauge").Return(map[string]types.MetricTypeValue{"test3": types.Gauge(15.7)}, nil)
-	memStorage.EXPECT().GetByType("counter").Return(map[string]types.MetricTypeValue{"test4": types.Counter(15)}, nil)
-	serv := NewMetricsService(memStorage, &config.Config{}, context.Background())
-	fmt.Println(serv.GetMetrics())
-	fmt.Println(serv.AddMetric("test", "counter", "20"))
+	type mockBehavior func(s *mock.MockMemRepository, name, t, value string)
+	type mem struct {
+		name  string
+		t     string
+		value string
+	}
+	tests := []struct {
+		name         string
+		mockBehavior mockBehavior
+		mem          mem
+		want         error
+	}{
+		{
+			name: "# OK",
+			mockBehavior: func(s *mock.MockMemRepository, name, t, value string) {
+				switch t {
+				case types.GaugeType:
+					val, err := strconv.ParseFloat(value, 64)
+					if err != nil {
+						log.Fatalf("parsing float err : %v ", err)
+					}
+					s.EXPECT().AddMetricGauge(name, val).Return(val)
+				case types.CounterType:
+					val, err := strconv.ParseInt(value, 10, 64)
+					if err != nil {
+						log.Fatalf("parsing int64 err : %v ", err)
+					}
+					s.EXPECT().AddMetricCounter(name, val).Return(val)
+				}
+
+			},
+			mem: mem{
+				name:  "testCounter",
+				value: "20",
+				t:     types.CounterType,
+			},
+			want: nil,
+		}, {
+			name: "# not valid type",
+			mockBehavior: func(s *mock.MockMemRepository, name, t, value string) {
+
+			},
+			mem: mem{
+				name:  "testCounter",
+				value: "20.0",
+				t:     types.CounterType,
+			},
+			want: errors.New("convert string to int64 error=strconv.ParseInt: parsing \"20.0\": invalid syntax"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			repo := mock.NewMockMemRepository(ctrl)
+			test.mockBehavior(repo, test.mem.name, test.mem.t, test.mem.value)
+			service := NewMetricsService(repo, &config.Config{}, context.Background())
+
+			err := service.AddMetric(test.mem.name, test.mem.t, test.mem.value)
+			assert.Equal(t, test.want, err)
+		})
+	}
 }

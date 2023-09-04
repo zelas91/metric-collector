@@ -102,7 +102,7 @@ func (s *MemService) GetMetric(name, t string) types.MetricTypeValue {
 
 func (s *MemService) AddMetric(name, t string, value string) error {
 	if ok := checkValid(t, value); !ok {
-		return errors.New("not valid name or type ")
+		return errors.New("not valid name or type")
 	}
 
 	switch strings.ToLower(t) {
