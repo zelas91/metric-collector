@@ -1,9 +1,12 @@
 package agent
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
-	"github.com/zelas91/metric-collector/internal/server/storages"
+	"github.com/zelas91/metric-collector/internal/server/repository"
+	"github.com/zelas91/metric-collector/internal/server/service"
 	"net/http/httptest"
 	"testing"
 )
@@ -11,7 +14,7 @@ import (
 func TestUpdateMetrics(t *testing.T) {
 	t.Run("test update metric #1", func(t *testing.T) {
 
-		handler := controller.NewMetricHandler(storages.NewMemStorage())
+		handler := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background()))
 		server := httptest.NewServer(handler.InitRoutes())
 		defer server.Close()
 

@@ -4,12 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
-	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/logger"
 )
 
 var addr *string
 var pollInterval *int
 var reportInterval *int
+
+var log = logger.New()
 
 func init() {
 	addr = flag.String("a", "localhost:8080", "endpoint start server")
@@ -28,7 +30,7 @@ func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		logrus.Debugf("read env error=%v", err)
+		log.Errorf("read env error=%v", err)
 	}
 	flag.Parse()
 	if cfg.BaseURL == "" {
@@ -42,11 +44,5 @@ func NewConfig() *Config {
 		cfg.PollInterval = *pollInterval
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
-	initLogger()
 	return &cfg
-}
-func initLogger() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
-	logrus.SetLevel(logrus.DebugLevel)
-	//logrus.SetReportCaller(true)
 }

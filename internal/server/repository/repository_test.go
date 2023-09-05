@@ -1,4 +1,4 @@
-package storages
+package repository
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestAddMetric(t *testing.T) {
+func TestAddMetricGauge(t *testing.T) {
 	memStorage := &MemStorage{
 		Gauge: map[string]types.MetricTypeValue{
 			"cpu_usage":    types.Gauge(0.85),
@@ -35,12 +35,9 @@ func TestAddMetric(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			memStorage.AddMetric(test.name, test.metricType, test.expected)
-			if test.metricType == types.GaugeType {
-				assert.Equal(t, types.Gauge(test.expected), memStorage.Gauge[test.name])
-			} else {
-				assert.Equal(t, types.Counter(test.expected), memStorage.Counter[test.name])
-			}
+			memStorage.AddMetricGauge(test.name, test.expected)
+			assert.Equal(t, types.Gauge(test.expected), memStorage.Gauge[test.name])
+
 		})
 	}
 }

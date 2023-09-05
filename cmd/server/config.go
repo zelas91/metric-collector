@@ -3,36 +3,37 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	"github.com/sirupsen/logrus"
+	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/config"
 )
 
-var addr *string
+var log = logger.New()
 
-func init() {
-	addr = flag.String("a", "localhost:8080", "endpoint start server")
-}
-
-type Config struct {
-	Addr string `env:"ADDRESS"`
-}
-
-func NewConfig() *Config {
-	var cfg Config
-	initLogger()
+func NewConfig() *config.Config {
+	var cfg config.Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		logrus.Debugf("read env error=%v", err)
+		log.Errorf("read env error=%v", err)
 	}
-	if cfg.Addr != "" {
-		return &cfg
+
+	if cfg.Addr == nil {
+		cfg.Addr = new(string)
+		flag.StringVar(cfg.Addr, "a", "localhost:8080", "endpoint start server")
+	}
+	if cfg.StoreInterval == nil {
+		cfg.StoreInterval = new(int)
+		flag.IntVar(cfg.StoreInterval, "i", 300, "store interval")
+	}
+
+	if cfg.Restore == nil {
+		cfg.Restore = new(bool)
+		flag.BoolVar(cfg.Restore, "r", true, "load file metrics")
+	}
+	if cfg.FilePath == nil {
+		cfg.FilePath = new(string)
+		flag.StringVar(cfg.FilePath, "f", "/tmp/metrics-db.json", "file path ")
+
 	}
 	flag.Parse()
-	return &Config{
-		Addr: *addr,
-	}
-}
-func initLogger() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
-	logrus.SetLevel(logrus.DebugLevel)
-	//logrus.SetReportCaller(true)
+	return &cfg
 }
