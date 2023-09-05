@@ -19,7 +19,7 @@ func TestAddMetricJSON(t *testing.T) {
 		excepted payload.Metrics
 		err      error
 	}
-	serv := NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())
+	serv := NewMetricsService(context.Background(), repository.NewMemStorage(nil), &config.Config{})
 	gaugeValue := 20.123
 	deltaValue := int64(200)
 	tests := []struct {
@@ -184,7 +184,7 @@ func TestAddMetricGaugeMock(t *testing.T) {
 			defer ctrl.Finish()
 			repo := mock.NewMockMemRepository(ctrl)
 			test.mockBehavior(repo, test.mem.name, test.mem.t, test.mem.value)
-			service := NewMetricsService(repo, &config.Config{}, context.Background())
+			service := NewMetricsService(context.Background(), repo, &config.Config{})
 
 			err := service.AddMetric(test.mem.name, test.mem.t, test.mem.value)
 			assert.Equal(t, test.want, err)

@@ -146,3 +146,11 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 	}
 	c.AbortWithStatusJSON(http.StatusOK, res)
 }
+
+func (h *MetricHandler) Ping(c *gin.Context) {
+	if err := h.memService.Ping(); err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	c.AbortWithStatus(http.StatusOK)
+}

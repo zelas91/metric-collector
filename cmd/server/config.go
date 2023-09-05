@@ -34,6 +34,10 @@ func NewConfig() *config.Config {
 		flag.StringVar(cfg.FilePath, "f", "/tmp/metrics-db.json", "file path ")
 
 	}
+	if cfg.Database == nil {
+		cfg.Database = new(string)
+		flag.StringVar(cfg.Database, "d", "host=192.168.35.131 port=5432 user=userm dbname=metrics password=12345678 sslmode=disable", "Database URL")
+	}
 	flag.Parse()
 	return &cfg
 }

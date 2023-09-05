@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -12,11 +13,25 @@ type MemRepository interface {
 	AddMetricCounter(name string, value int64) int64
 	ReadMetric(name string, t string) types.MetricTypeValue
 	GetByType(t string) (map[string]types.MetricTypeValue, error)
+	Ping() error
+	Shutdown() error
 }
 
 type MemStorage struct {
 	Gauge   map[string]types.MetricTypeValue `json:"gauge"`
-	Counter map[string]types.MetricTypeValue `json:"counter"` //name , type , value
+	Counter map[string]types.MetricTypeValue `json:"counter"`
+	db      *sql.DB
+}
+
+func (m *MemStorage) SetDB(db *sql.DB) {
+	m.db = db
+}
+
+func NewMemStorage(db *sql.DB) *MemStorage {
+	return &MemStorage{Gauge: make(map[string]types.MetricTypeValue),
+		Counter: make(map[string]types.MetricTypeValue),
+		db:      db,
+	}
 }
 
 func (m *MemStorage) AddMetricGauge(name string, value float64) float64 {
@@ -55,11 +70,6 @@ func (m *MemStorage) ReadMetric(name string, t string) types.MetricTypeValue {
 	}
 }
 
-func NewMemStorage() *MemStorage {
-	return &MemStorage{Gauge: make(map[string]types.MetricTypeValue),
-		Counter: make(map[string]types.MetricTypeValue),
-	}
-}
 func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, error) {
 	switch t {
 	case types.GaugeType:
@@ -90,4 +100,12 @@ func (m *MemStorage) UnmarshalJSON(bytes []byte) error { //
 	}
 	return nil
 
+}
+
+func (m *MemStorage) Ping() error {
+	return m.db.Ping()
+}
+
+func (m *MemStorage) Shutdown() error {
+	return m.db.Close()
 }

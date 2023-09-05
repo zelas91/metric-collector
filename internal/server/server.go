@@ -13,17 +13,30 @@ import (
 	"time"
 )
 
-var serv *http.Server
+var serv *Server
 
-func Run(cfg *config.Config, ctx context.Context) {
+type Server struct {
+	http *http.Server
+	repo repository.MemRepository
+}
+
+func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
-	metric := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), cfg, ctx))
-	serv = &http.Server{
-		Addr:    *cfg.Addr,
-		Handler: metric.InitRoutes(), // Ваш обработчик запросов
+
+	db := repository.NewPostgresDB(*cfg.Database)
+
+	repo := repository.NewMemStorage(db)
+	metric := controller.NewMetricHandler(service.NewMetricsService(ctx, repo, cfg))
+
+	serv = &Server{
+		http: &http.Server{
+			Addr:    *cfg.Addr,
+			Handler: metric.InitRoutes(), // Ваш обработчик запросов
+		},
+		repo: repo,
 	}
 	go func() {
-		if err := serv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := serv.http.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("ListenAndServe %v", err)
 		}
 	}()
@@ -31,7 +44,10 @@ func Run(cfg *config.Config, ctx context.Context) {
 func Shutdown(ctx context.Context) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	if err := serv.Shutdown(ctxTimeout); err != nil && !errors.Is(err, http.ErrServerClosed) {
+	if err := serv.repo.Shutdown(); err != nil {
+		log.Printf("repository shutdown err %v", err)
+	}
+	if err := serv.http.Shutdown(ctxTimeout); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("shutdown server %v", err)
 	}
 }

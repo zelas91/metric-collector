@@ -22,6 +22,7 @@ type Service interface {
 	GetMetric(name, t string) types.MetricTypeValue
 	GetMetrics() (map[string]types.MetricTypeValue, error)
 	AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, error)
+	Ping() error
 }
 
 var log = logger.New()
@@ -33,9 +34,10 @@ type MemService struct {
 	ctx  context.Context
 }
 
-func NewMetricsService(repo repository.MemRepository, cfg *config.Config, ctx context.Context) *MemService {
+func NewMetricsService(ctx context.Context, repo repository.MemRepository, cfg *config.Config) *MemService {
 	mem := readMetricsDB(cfg)
 	if mem != nil {
+		mem.SetDB(repository.NewPostgresDB(*cfg.Database))
 		return &MemService{repo: mem, cfg: cfg, ctx: ctx}
 	}
 	return &MemService{repo: repo, cfg: cfg, ctx: ctx}
@@ -245,4 +247,7 @@ func (s *MemService) saveMetric() {
 		return
 	}
 	s.asyncSave()
+}
+func (s *MemService) Ping() error {
+	return s.repo.Ping()
 }

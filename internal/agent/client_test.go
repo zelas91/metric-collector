@@ -14,7 +14,7 @@ import (
 func TestUpdateMetrics(t *testing.T) {
 	t.Run("test update metric #1", func(t *testing.T) {
 
-		handler := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background()))
+		handler := controller.NewMetricHandler(service.NewMetricsService(context.Background(), repository.NewMemStorage(nil), &config.Config{}))
 		server := httptest.NewServer(handler.InitRoutes())
 		defer server.Close()
 
