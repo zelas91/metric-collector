@@ -82,6 +82,7 @@ func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, erro
 	}
 }
 
+// UnmarshalJSON implementation
 func (m *MemStorage) UnmarshalJSON(bytes []byte) error { //
 	mem := &struct {
 		Gauge   map[string]float64 `json:"gauge"`
