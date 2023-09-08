@@ -19,8 +19,8 @@ import (
 
 type Service interface {
 	AddMetric(name, t string, value string) error
-	GetMetric(name, t string) types.MetricTypeValue
-	GetMetrics() (map[string]types.MetricTypeValue, error)
+	GetMetric(name, t string) interface{}
+	GetMetrics() (map[string]interface{}, error)
 	AddMetricsJSON(metric payload.Metrics) (*payload.Metrics, error)
 }
 
@@ -76,16 +76,12 @@ func (s *MemService) addMetricCounterJSON(name string, value int64) int64 {
 	return s.repo.AddMetricCounter(name, value)
 }
 
-func (s *MemService) GetMetrics() (map[string]types.MetricTypeValue, error) {
-	gauge, err := s.repo.GetByType(types.GaugeType)
-	if err != nil {
-		return nil, fmt.Errorf("internal server error. %v", err)
-	}
-	counter, err := s.repo.GetByType(types.CounterType)
-	if err != nil {
-		return nil, fmt.Errorf("internal server error. %v", err)
-	}
-	arraysMetric := make(map[string]types.MetricTypeValue, len(gauge)+len(counter))
+func (s *MemService) GetMetrics() (map[string]interface{}, error) {
+	gauge := s.repo.GetMetricGauges()
+
+	counter := s.repo.GetMetricCounters()
+
+	arraysMetric := make(map[string]interface{}, len(gauge)+len(counter))
 
 	for key, value := range gauge {
 		arraysMetric[key] = value
@@ -96,8 +92,19 @@ func (s *MemService) GetMetrics() (map[string]types.MetricTypeValue, error) {
 	return arraysMetric, nil
 }
 
-func (s *MemService) GetMetric(name, t string) types.MetricTypeValue {
-	return s.repo.ReadMetric(name, t)
+func (s *MemService) GetMetric(name, t string) interface{} {
+
+	switch t {
+	case types.GaugeType:
+		if val := s.repo.GetMetricGauge(name); val != nil {
+			return *val
+		}
+	case types.CounterType:
+		if val := s.repo.GetMetricCounter(name); val != nil {
+			return *val
+		}
+	}
+	return nil
 }
 
 func (s *MemService) AddMetric(name, t string, value string) error {

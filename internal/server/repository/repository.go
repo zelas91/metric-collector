@@ -1,93 +1,62 @@
 package repository
 
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/zelas91/metric-collector/internal/server/types"
-)
-
 //go:generate mockgen -package mocks -destination=./mocks/mock_repository.go -source=repository.go -package=mock MemRepository
 type MemRepository interface {
 	AddMetricGauge(name string, value float64) float64
 	AddMetricCounter(name string, value int64) int64
-	ReadMetric(name string, t string) types.MetricTypeValue
-	GetByType(t string) (map[string]types.MetricTypeValue, error)
+	GetMetricGauge(name string) *float64
+	GetMetricCounter(name string) *int64
+	GetMetricGauges() map[string]float64
+	GetMetricCounters() map[string]int64
 }
 
 type MemStorage struct {
-	Gauge   map[string]types.MetricTypeValue `json:"gauge"`
-	Counter map[string]types.MetricTypeValue `json:"counter"` //name , type , value
+	Gauge   map[string]float64 `json:"gauge"`
+	Counter map[string]int64   `json:"counter"` //name , type , value
 }
 
 func (m *MemStorage) AddMetricGauge(name string, value float64) float64 {
-	m.Gauge[name] = types.Gauge(value)
+	m.Gauge[name] = value
 	return value
 }
 
 func (m *MemStorage) AddMetricCounter(name string, value int64) int64 {
 	existingValue, ok := m.Counter[name]
 	if ok {
-		newValue := types.Counter(value) + (existingValue.(types.Counter))
+		newValue := value + existingValue
 		m.Counter[name] = newValue
 	} else {
-		m.Counter[name] = types.Counter(value)
+		m.Counter[name] = value
 	}
 
-	return int64(m.Counter[name].(types.Counter))
+	return m.Counter[name]
 }
 
-func (m *MemStorage) ReadMetric(name string, t string) types.MetricTypeValue {
-	switch t {
-	case types.GaugeType:
-		val, ok := m.Gauge[name]
-		if !ok {
-			return nil
-		}
-		return val
-	case types.CounterType:
-		val, ok := m.Counter[name]
-		if !ok {
-			return nil
-		}
-		return val
-	default:
+func (m *MemStorage) GetMetricGauge(name string) *float64 {
+	val, ok := m.Gauge[name]
+	if !ok {
 		return nil
 	}
+	return &val
+}
+
+func (m *MemStorage) GetMetricCounter(name string) *int64 {
+	val, ok := m.Counter[name]
+	if !ok {
+		return nil
+	}
+	return &val
 }
 
 func NewMemStorage() *MemStorage {
-	return &MemStorage{Gauge: make(map[string]types.MetricTypeValue),
-		Counter: make(map[string]types.MetricTypeValue),
-	}
-}
-func (m *MemStorage) GetByType(t string) (map[string]types.MetricTypeValue, error) {
-	switch t {
-	case types.GaugeType:
-		return m.Gauge, nil
-	case types.CounterType:
-		return m.Counter, nil
-	default:
-		return nil, fmt.Errorf("type %s not found", t)
-
+	return &MemStorage{Gauge: make(map[string]float64),
+		Counter: make(map[string]int64),
 	}
 }
 
-func (m *MemStorage) UnmarshalJSON(bytes []byte) error { //
-	mem := &struct {
-		Gauge   map[string]float64 `json:"gauge"`
-		Counter map[string]int64   `json:"counter"`
-	}{}
-	if err := json.Unmarshal(bytes, mem); err != nil {
-		return err
-	}
-	m.Counter = make(map[string]types.MetricTypeValue)
-	m.Gauge = make(map[string]types.MetricTypeValue)
-	for key, value := range mem.Counter {
-		m.Counter[key] = types.Counter(value)
-	}
-	for key, value := range mem.Gauge {
-		m.Gauge[key] = types.Gauge(value)
-	}
-	return nil
-
+func (m *MemStorage) GetMetricGauges() map[string]float64 {
+	return m.Gauge
+}
+func (m *MemStorage) GetMetricCounters() map[string]int64 {
+	return m.Counter
 }

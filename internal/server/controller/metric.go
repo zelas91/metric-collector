@@ -61,6 +61,7 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	t := c.Param(paramType)
 	name := c.Param(paramName)
 	result := h.memService.GetMetric(name, t)
+
 	if result == nil {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 		return
@@ -109,14 +110,14 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	switch request.MType {
 	case types.CounterType:
 		if val != nil {
-			delta := int64(val.(types.Counter))
+			delta := val.(int64)
 			result.Delta = &delta
 		} else {
 			result.Delta = new(int64)
 		}
 	case types.GaugeType:
 		if val != nil {
-			value := float64(val.(types.Gauge))
+			value := val.(float64)
 			result.Value = &value
 		} else {
 			result.Value = new(float64)
