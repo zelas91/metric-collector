@@ -6,7 +6,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
-	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	mock "github.com/zelas91/metric-collector/internal/server/repository/mocks"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -16,28 +15,28 @@ import (
 
 func TestAddMetricJSON(t *testing.T) {
 	type result struct {
-		excepted payload.Metrics
+		excepted repository.Metric
 		err      error
 	}
-	serv := NewMetricsService(context.Background(), repository.NewMemStorage(nil), &config.Config{})
+	serv := NewMemService(context.Background(), repository.NewMemStore(), &config.Config{})
 	gaugeValue := 20.123
 	deltaValue := int64(200)
 	tests := []struct {
 		name  string
 		want  result
-		sense payload.Metrics
+		sense repository.Metric
 	}{
 		{
 			name: "# 1 Gauge Add JSON",
 			want: result{
-				excepted: payload.Metrics{
+				excepted: repository.Metric{
 					ID:    "CPU",
 					MType: types.GaugeType,
 					Value: &gaugeValue,
 				},
 				err: nil,
 			},
-			sense: payload.Metrics{
+			sense: repository.Metric{
 				ID:    "CPU",
 				MType: types.GaugeType,
 				Value: &gaugeValue,
@@ -46,14 +45,14 @@ func TestAddMetricJSON(t *testing.T) {
 		{
 			name: "# 2 Counter Add JSON",
 			want: result{
-				excepted: payload.Metrics{
+				excepted: repository.Metric{
 					ID:    "Poll",
 					MType: types.CounterType,
 					Delta: &deltaValue,
 				},
 				err: nil,
 			},
-			sense: payload.Metrics{
+			sense: repository.Metric{
 				ID:    "Poll",
 				MType: types.CounterType,
 				Delta: &deltaValue,
@@ -62,7 +61,7 @@ func TestAddMetricJSON(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := serv.AddMetricsJSON(test.sense)
+			res, err := serv.AddMetricJSON(test.sense)
 
 			assert.Equal(t, test.want.err, err)
 			assert.Equal(t, &test.want.excepted, res)
@@ -126,8 +125,9 @@ func TestIsValue(t *testing.T) {
 	}
 }
 
-func TestAddMetricGaugeMock(t *testing.T) {
-	type mockBehavior func(s *mock.MockMemRepository, name, t, value string)
+func TestAddMetric(t *testing.T) {
+	deltaValue1 := int64(20)
+	type mockBehavior func(s *mock.MockStorageRepository, name, t, value string)
 	type mem struct {
 		name  string
 		t     string
@@ -137,24 +137,28 @@ func TestAddMetricGaugeMock(t *testing.T) {
 		name         string
 		mockBehavior mockBehavior
 		mem          mem
-		want         error
+		wantErr      error
+		expected     *repository.Metric
 	}{
 		{
 			name: "# OK",
-			mockBehavior: func(s *mock.MockMemRepository, name, t, value string) {
+			mockBehavior: func(s *mock.MockStorageRepository, name, t, value string) {
+				metric := repository.Metric{ID: name, MType: t}
 				switch t {
 				case types.GaugeType:
 					val, err := strconv.ParseFloat(value, 64)
 					if err != nil {
-						log.Fatalf("parsing float err : %v ", err)
+						log.Errorf("error convert string to float64, err:%v", err)
 					}
-					s.EXPECT().AddMetricGauge(name, val).Return(val)
+					metric.Value = &val
+					s.EXPECT().AddMetric(metric).Return(&metric)
 				case types.CounterType:
 					val, err := strconv.ParseInt(value, 10, 64)
 					if err != nil {
-						log.Fatalf("parsing int64 err : %v ", err)
+						log.Errorf("error convert string to float64, err:%v", err)
 					}
-					s.EXPECT().AddMetricCounter(name, val).Return(val)
+					metric.Delta = &val
+					s.EXPECT().AddMetric(metric).Return(&metric)
 				}
 
 			},
@@ -163,10 +167,15 @@ func TestAddMetricGaugeMock(t *testing.T) {
 				value: "20",
 				t:     types.CounterType,
 			},
-			want: nil,
+			expected: &repository.Metric{
+				ID:    "testCounter",
+				Delta: &deltaValue1,
+				MType: types.CounterType,
+			},
+			wantErr: nil,
 		}, {
 			name: "# not valid type",
-			mockBehavior: func(s *mock.MockMemRepository, name, t, value string) {
+			mockBehavior: func(s *mock.MockStorageRepository, name, t, value string) {
 
 			},
 			mem: mem{
@@ -174,7 +183,7 @@ func TestAddMetricGaugeMock(t *testing.T) {
 				value: "20.0",
 				t:     types.CounterType,
 			},
-			want: errors.New("convert string to int64 error=strconv.ParseInt: parsing \"20.0\": invalid syntax"),
+			wantErr: errors.New("service addmetric type=counter : error=strconv.ParseInt: parsing \"20.0\": invalid syntax"),
 		},
 	}
 
@@ -182,12 +191,17 @@ func TestAddMetricGaugeMock(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			repo := mock.NewMockMemRepository(ctrl)
+			repo := mock.NewMockStorageRepository(ctrl)
 			test.mockBehavior(repo, test.mem.name, test.mem.t, test.mem.value)
-			service := NewMetricsService(context.Background(), repo, &config.Config{})
+			service := NewMemService(context.Background(), repo, &config.Config{})
 
-			err := service.AddMetric(test.mem.name, test.mem.t, test.mem.value)
-			assert.Equal(t, test.want, err)
+			metric, err := service.AddMetric(test.mem.name, test.mem.t, test.mem.value)
+			if test.wantErr != nil {
+				assert.Equal(t, test.wantErr.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, test.expected, metric)
 		})
 	}
 }

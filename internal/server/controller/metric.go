@@ -5,10 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
+	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
 	"net/http"
+	"strings"
 )
 
 var log = logger.New()
@@ -50,7 +52,8 @@ func (h *MetricHandler) AddMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	value := c.Param(paramValue)
 	t := c.Param(paramType)
-	if err := h.memService.AddMetric(c.Param(paramName), t, value); err != nil {
+
+	if _, err := h.memService.AddMetric(c.Param(paramName), t, value); err != nil {
 		payload.NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -60,10 +63,17 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	t := c.Param(paramType)
 	name := c.Param(paramName)
-	result := h.memService.GetMetric(name, t)
-	if result == nil {
+	mem, err := h.memService.GetMetric(name)
+	if err != nil || !strings.EqualFold(t, mem.MType) {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 		return
+	}
+	var result string
+	switch t {
+	case types.GaugeType:
+		result = fmt.Sprintf("%v", *mem.Value)
+	case types.CounterType:
+		result = fmt.Sprintf("%v", *mem.Delta)
 	}
 	if _, err := c.Writer.WriteString(fmt.Sprintf("%v", result)); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
@@ -78,11 +88,20 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	arraysMetric, err := h.memService.GetMetrics()
+	metrics := h.memService.GetMetrics()
+	mapMetrics := make(map[string]interface{}, len(metrics))
+	for _, metric := range metrics {
+		switch metric.MType {
+		case types.GaugeType:
+			mapMetrics[metric.ID] = *metric.Value
+		case types.CounterType:
+			mapMetrics[metric.ID] = *metric.Delta
+		}
+	}
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 	}
-	if err = body.Execute(c.Writer, arraysMetric); err != nil {
+	if err = body.Execute(c.Writer, mapMetrics); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -93,52 +112,33 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
 		return
 	}
-	var request payload.Metrics
+	var request repository.Metric
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Errorf("bind json  json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	val := h.memService.GetMetric(request.ID, request.MType)
-
-	result := payload.Metrics{
-		ID:    request.ID,
-		MType: request.MType,
+	val, err := h.memService.GetMetric(request.ID)
+	if err != nil {
+		log.Errorf("controller get metric error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusNotFound, err.Error())
+		return
 	}
-
-	switch request.MType {
-	case types.CounterType:
-		if val != nil {
-			delta := int64(val.(types.Counter))
-			result.Delta = &delta
-		} else {
-			result.Delta = new(int64)
-		}
-	case types.GaugeType:
-		if val != nil {
-			value := float64(val.(types.Gauge))
-			result.Value = &value
-		} else {
-			result.Value = new(float64)
-		}
-	}
-
-	c.AbortWithStatusJSON(http.StatusOK, result)
+	c.AbortWithStatusJSON(http.StatusOK, val)
 }
-
 func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 	if c.GetHeader("Content-Type") != "application/json" {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
 		return
 	}
 
-	var request payload.Metrics
+	var request repository.Metric
 	if err := c.ShouldBindJSON(&request); err != nil {
 		log.Errorf("bind json  error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	res, err := h.memService.AddMetricsJSON(request)
+	res, err := h.memService.AddMetricJSON(request)
 	if err != nil {
 		log.Errorf("add metric json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
@@ -147,10 +147,10 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, res)
 }
 
-func (h *MetricHandler) Ping(c *gin.Context) {
-	if err := h.memService.Ping(); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-	c.AbortWithStatus(http.StatusOK)
-}
+//func (h *MetricHandler) Ping(c *gin.Context) {
+//	if err := h.memService.Ping(); err != nil {
+//		c.AbortWithStatus(http.StatusInternalServerError)
+//		return
+//	}
+//	c.AbortWithStatus(http.StatusOK)
+//}

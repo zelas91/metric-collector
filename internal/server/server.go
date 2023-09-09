@@ -17,16 +17,16 @@ var serv *Server
 
 type Server struct {
 	http *http.Server
-	repo repository.MemRepository
+	repo repository.StorageRepository
 }
 
 func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db := repository.NewPostgresDB(*cfg.Database)
+	//db := repository.NewPostgresDB(*cfg.Database)
 
-	repo := repository.NewMemStorage(db)
-	metric := controller.NewMetricHandler(service.NewMetricsService(ctx, repo, cfg))
+	repo := repository.NewMemStore()
+	metric := controller.NewMetricHandler(service.NewMemService(ctx, repo, cfg))
 
 	serv = &Server{
 		http: &http.Server{
@@ -44,9 +44,9 @@ func Run(ctx context.Context, cfg *config.Config) {
 func Shutdown(ctx context.Context) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	if err := serv.repo.Shutdown(); err != nil {
-		log.Printf("repository shutdown err %v", err)
-	}
+	//if err := serv.repo.Shutdown(); err != nil {
+	//	log.Printf("repository shutdown err %v", err)
+	//}
 	if err := serv.http.Shutdown(ctxTimeout); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("shutdown server %v", err)
 	}

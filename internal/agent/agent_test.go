@@ -2,7 +2,6 @@ package agent
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/zelas91/metric-collector/internal/server/types"
 	"testing"
 )
 
@@ -21,11 +20,11 @@ func TestGetGauges(t *testing.T) {
 	stats := NewStats()
 	gauges := stats.GetGauges()
 
-	var expectedGauges = map[string]types.Gauge{
-		"Alloc":         types.Gauge(stats.Alloc),
-		"GCCPUFraction": types.Gauge(stats.GCCPUFraction),
-		"GCSys":         types.Gauge(stats.GCSys),
-		"RandomValue":   types.Gauge(stats.RandomValue),
+	var expectedGauges = map[string]float64{
+		"Alloc":         float64(stats.Alloc),
+		"GCCPUFraction": float64(stats.GCCPUFraction),
+		"GCSys":         float64(stats.GCSys),
+		"RandomValue":   float64(stats.RandomValue),
 	}
 	for key, expectedValue := range expectedGauges {
 		actualValue, ok := gauges[key]
@@ -37,8 +36,8 @@ func TestGetCounters(t *testing.T) {
 	stats := NewStats()
 	counters := stats.GetCounters()
 
-	expectedCounters := map[string]types.Counter{
-		"PollCount": types.Counter(stats.PollCount),
+	expectedCounters := map[string]int64{
+		"PollCount": stats.PollCount,
 	}
 
 	for key, expectedValue := range expectedCounters {

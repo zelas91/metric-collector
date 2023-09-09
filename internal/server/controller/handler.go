@@ -10,7 +10,7 @@ func (h *MetricHandler) InitRoutes() *gin.Engine {
 
 	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress)
 	router.GET("/", h.GetMetrics)
-	router.GET("/ping", h.Ping)
+	//router.GET("/ping", h.Ping)
 	update := router.Group("/update")
 	value := router.Group("/value")
 	{

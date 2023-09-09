@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/zelas91/metric-collector/internal/logger"
-	"github.com/zelas91/metric-collector/internal/server/payload"
+	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"time"
 )
@@ -28,11 +28,10 @@ func NewClientHTTP() *ClientHTTP {
 
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	for name, value := range s.GetGauges() {
-		val := float64(value)
-		body, err := json.Marshal(payload.Metrics{
+		body, err := json.Marshal(repository.Metric{
 			ID:    name,
 			MType: types.GaugeType,
-			Value: &val,
+			Value: &value,
 		})
 
 		if err != nil {
@@ -56,11 +55,10 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 	}
 
 	for name, value := range s.GetCounters() {
-		val := int64(value)
-		body, err := json.Marshal(payload.Metrics{
+		body, err := json.Marshal(repository.Metric{
 			ID:    name,
 			MType: types.CounterType,
-			Delta: &val,
+			Delta: &value,
 		})
 		if err != nil {
 			return fmt.Errorf("json marshal eroor = %v", err)
