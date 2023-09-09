@@ -98,9 +98,6 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 			mapMetrics[metric.ID] = *metric.Delta
 		}
 	}
-	if err != nil {
-		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
-	}
 	if err = body.Execute(c.Writer, mapMetrics); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
