@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -58,7 +59,7 @@ func TestAddMetric(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mem := NewMemStorage()
-			result := mem.AddMetric(test.metric)
+			result := mem.AddMetric(context.Background(), test.metric)
 			assert.Equal(t, test.expected, result)
 		})
 	}
@@ -121,7 +122,7 @@ func TestGetMetric(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := mem.GetMetric(test.metric.ID)
+			result, err := mem.GetMetric(context.Background(), test.metric.ID)
 			assert.Equal(t, test.expected.metric, result)
 			assert.Equal(t, test.expected.err, err)
 		})

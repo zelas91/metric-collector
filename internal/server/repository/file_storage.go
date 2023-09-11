@@ -47,24 +47,24 @@ func (f *FileStorage) Shutdown() error {
 	return f.file.Close()
 }
 
-func (f *FileStorage) AddMetric(metric Metric) *Metric {
-	resultMetrics := f.mem.AddMetric(metric)
+func (f *FileStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
+	resultMetrics := f.mem.AddMetric(ctx, metric)
 	f.saveMetric()
 	return resultMetrics
 }
 
-func (f *FileStorage) GetMetric(name string) (*Metric, error) {
-	metric, err := f.mem.GetMetric(name)
+func (f *FileStorage) GetMetric(ctx context.Context, name string) (*Metric, error) {
+	metric, err := f.mem.GetMetric(ctx, name)
 	return metric, err
 }
 
-func (f *FileStorage) GetMetrics() []Metric {
-	metrics := f.mem.GetMetrics()
+func (f *FileStorage) GetMetrics(ctx context.Context) []Metric {
+	metrics := f.mem.GetMetrics(ctx)
 	return metrics
 }
 
 func (f *FileStorage) save() error {
-	metrics := f.mem.GetMetrics()
+	metrics := f.mem.GetMetrics(context.Background())
 	data, err := json.MarshalIndent(metrics, "", " ")
 	if err != nil {
 		return err

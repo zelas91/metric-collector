@@ -61,7 +61,7 @@ func TestAddMetricJSON(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			res, err := serv.AddMetricJSON(test.sense)
+			res, err := serv.AddMetricJSON(context.Background(), test.sense)
 
 			assert.Equal(t, test.want.err, err)
 			assert.Equal(t, &test.want.excepted, res)
@@ -151,14 +151,14 @@ func TestAddMetric(t *testing.T) {
 						log.Errorf("error convert string to float64, err:%v", err)
 					}
 					metric.Value = &val
-					s.EXPECT().AddMetric(metric).Return(&metric)
+					s.EXPECT().AddMetric(context.Background(), metric).Return(&metric)
 				case types.CounterType:
 					val, err := strconv.ParseInt(value, 10, 64)
 					if err != nil {
 						log.Errorf("error convert string to float64, err:%v", err)
 					}
 					metric.Delta = &val
-					s.EXPECT().AddMetric(metric).Return(&metric)
+					s.EXPECT().AddMetric(context.Background(), metric).Return(&metric)
 				}
 
 			},
@@ -195,7 +195,7 @@ func TestAddMetric(t *testing.T) {
 			test.mockBehavior(repo, test.mem.name, test.mem.t, test.mem.value)
 			service := NewMemService(context.Background(), repo, &config.Config{})
 
-			metric, err := service.AddMetric(test.mem.name, test.mem.t, test.mem.value)
+			metric, err := service.AddMetric(context.Background(), test.mem.name, test.mem.t, test.mem.value)
 			if test.wantErr != nil {
 				assert.Equal(t, test.wantErr.Error(), err.Error())
 			} else {

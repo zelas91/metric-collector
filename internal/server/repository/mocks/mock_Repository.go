@@ -5,6 +5,7 @@
 package mock
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,44 +36,118 @@ func (m *MockStorageRepository) EXPECT() *MockStorageRepositoryMockRecorder {
 }
 
 // AddMetric mocks base method.
-func (m *MockStorageRepository) AddMetric(metrics repository.Metric) *repository.Metric {
+func (m *MockStorageRepository) AddMetric(ctx context.Context, metrics repository.Metric) *repository.Metric {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddMetric", metrics)
+	ret := m.ctrl.Call(m, "AddMetric", ctx, metrics)
 	ret0, _ := ret[0].(*repository.Metric)
 	return ret0
 }
 
 // AddMetric indicates an expected call of AddMetric.
-func (mr *MockStorageRepositoryMockRecorder) AddMetric(metrics interface{}) *gomock.Call {
+func (mr *MockStorageRepositoryMockRecorder) AddMetric(ctx, metrics interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMetric", reflect.TypeOf((*MockStorageRepository)(nil).AddMetric), metrics)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMetric", reflect.TypeOf((*MockStorageRepository)(nil).AddMetric), ctx, metrics)
 }
 
 // GetMetric mocks base method.
-func (m *MockStorageRepository) GetMetric(name string) (*repository.Metric, error) {
+func (m *MockStorageRepository) GetMetric(ctx context.Context, name string) (*repository.Metric, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetric", name)
+	ret := m.ctrl.Call(m, "GetMetric", ctx, name)
 	ret0, _ := ret[0].(*repository.Metric)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMetric indicates an expected call of GetMetric.
-func (mr *MockStorageRepositoryMockRecorder) GetMetric(name interface{}) *gomock.Call {
+func (mr *MockStorageRepositoryMockRecorder) GetMetric(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetric", reflect.TypeOf((*MockStorageRepository)(nil).GetMetric), name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetric", reflect.TypeOf((*MockStorageRepository)(nil).GetMetric), ctx, name)
 }
 
 // GetMetrics mocks base method.
-func (m *MockStorageRepository) GetMetrics() []repository.Metric {
+func (m *MockStorageRepository) GetMetrics(ctx context.Context) []repository.Metric {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetrics")
+	ret := m.ctrl.Call(m, "GetMetrics", ctx)
 	ret0, _ := ret[0].([]repository.Metric)
 	return ret0
 }
 
 // GetMetrics indicates an expected call of GetMetrics.
-func (mr *MockStorageRepositoryMockRecorder) GetMetrics() *gomock.Call {
+func (mr *MockStorageRepositoryMockRecorder) GetMetrics(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetrics", reflect.TypeOf((*MockStorageRepository)(nil).GetMetrics))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetrics", reflect.TypeOf((*MockStorageRepository)(nil).GetMetrics), ctx)
+}
+
+// MockShutdown is a mock of Shutdown interface.
+type MockShutdown struct {
+	ctrl     *gomock.Controller
+	recorder *MockShutdownMockRecorder
+}
+
+// MockShutdownMockRecorder is the mock recorder for MockShutdown.
+type MockShutdownMockRecorder struct {
+	mock *MockShutdown
+}
+
+// NewMockShutdown creates a new mock instance.
+func NewMockShutdown(ctrl *gomock.Controller) *MockShutdown {
+	mock := &MockShutdown{ctrl: ctrl}
+	mock.recorder = &MockShutdownMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockShutdown) EXPECT() *MockShutdownMockRecorder {
+	return m.recorder
+}
+
+// Shutdown mocks base method.
+func (m *MockShutdown) Shutdown() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Shutdown")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Shutdown indicates an expected call of Shutdown.
+func (mr *MockShutdownMockRecorder) Shutdown() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Shutdown", reflect.TypeOf((*MockShutdown)(nil).Shutdown))
+}
+
+// MockPing is a mock of Ping interface.
+type MockPing struct {
+	ctrl     *gomock.Controller
+	recorder *MockPingMockRecorder
+}
+
+// MockPingMockRecorder is the mock recorder for MockPing.
+type MockPingMockRecorder struct {
+	mock *MockPing
+}
+
+// NewMockPing creates a new mock instance.
+func NewMockPing(ctrl *gomock.Controller) *MockPing {
+	mock := &MockPing{ctrl: ctrl}
+	mock.recorder = &MockPingMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPing) EXPECT() *MockPingMockRecorder {
+	return m.recorder
+}
+
+// Ping mocks base method.
+func (m *MockPing) Ping() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockPingMockRecorder) Ping() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockPing)(nil).Ping))
 }

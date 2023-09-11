@@ -68,10 +68,10 @@ func TestAddMetric(t *testing.T) {
 
 func TestGetMetric(t *testing.T) {
 	serv := service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})
-	_, _ = serv.AddMetric("cpu", types.GaugeType, "0.85")
-	_, _ = serv.AddMetric("memory", types.GaugeType, "0.6")
-	_, _ = serv.AddMetric("requests", types.CounterType, "100")
-	_, _ = serv.AddMetric("errors", types.CounterType, "5")
+	_, _ = serv.AddMetric(context.Background(), "cpu", types.GaugeType, "0.85")
+	_, _ = serv.AddMetric(context.Background(), "memory", types.GaugeType, "0.6")
+	_, _ = serv.AddMetric(context.Background(), "requests", types.CounterType, "100")
+	_, _ = serv.AddMetric(context.Background(), "errors", types.CounterType, "5")
 	handler := NewMetricHandler(serv)
 	tests := []struct {
 		name string
@@ -186,10 +186,10 @@ func TestAddMetricJSON(t *testing.T) {
 
 func TestGetMetricJSON(t *testing.T) {
 	serv := service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})
-	_, _ = serv.AddMetric("cpu", types.GaugeType, "0.85")
-	_, _ = serv.AddMetric("memory", types.GaugeType, "0.6")
-	_, _ = serv.AddMetric("requests", types.CounterType, "100")
-	_, _ = serv.AddMetric("errors", types.CounterType, "5")
+	_, _ = serv.AddMetric(context.Background(), "cpu", types.GaugeType, "0.85")
+	_, _ = serv.AddMetric(context.Background(), "memory", types.GaugeType, "0.6")
+	_, _ = serv.AddMetric(context.Background(), "requests", types.CounterType, "100")
+	_, _ = serv.AddMetric(context.Background(), "errors", types.CounterType, "5")
 	handler := NewMetricHandler(serv)
 	type result struct {
 		statusCode int

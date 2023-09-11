@@ -14,10 +14,10 @@ import (
 
 //go:generate mockgen -package mocks -destination=./mocks/mock_service.go -source=service.go -package=mock_service Service
 type Service interface {
-	AddMetric(name, mType, value string) (*repository.Metric, error)
-	GetMetric(name string) (*repository.Metric, error)
-	GetMetrics() []repository.Metric
-	AddMetricJSON(metric repository.Metric) (*repository.Metric, error)
+	AddMetric(ctx context.Context, name, mType, value string) (*repository.Metric, error)
+	GetMetric(ctx context.Context, name string) (*repository.Metric, error)
+	GetMetrics(ctx context.Context) []repository.Metric
+	AddMetricJSON(ctx context.Context, metric repository.Metric) (*repository.Metric, error)
 }
 
 var (
@@ -34,7 +34,7 @@ func NewMemService(ctx context.Context, repo repository.StorageRepository, cfg *
 	return &MemService{repo: repo, cfg: cfg, ctx: ctx}
 }
 
-func (m *MemService) AddMetric(name, mType, value string) (*repository.Metric, error) {
+func (m *MemService) AddMetric(ctx context.Context, name, mType, value string) (*repository.Metric, error) {
 	if !checkValid(mType, value) {
 		return nil, errors.New("not valid name or type ")
 	}
@@ -53,29 +53,29 @@ func (m *MemService) AddMetric(name, mType, value string) (*repository.Metric, e
 		}
 		metric.Value = &val
 	}
-	return m.repo.AddMetric(metric), nil
+	return m.repo.AddMetric(ctx, metric), nil
 }
 
-func (m *MemService) GetMetric(name string) (*repository.Metric, error) {
-	return m.repo.GetMetric(name)
+func (m *MemService) GetMetric(ctx context.Context, name string) (*repository.Metric, error) {
+	return m.repo.GetMetric(ctx, name)
 }
 
-func (m *MemService) GetMetrics() []repository.Metric {
-	return m.repo.GetMetrics()
+func (m *MemService) GetMetrics(ctx context.Context) []repository.Metric {
+	return m.repo.GetMetrics(ctx)
 }
 
-func (m *MemService) AddMetricJSON(metric repository.Metric) (*repository.Metric, error) {
+func (m *MemService) AddMetricJSON(ctx context.Context, metric repository.Metric) (*repository.Metric, error) {
 	switch metric.MType {
 	case types.GaugeType:
 		if metric.Value == nil {
 			return nil, errors.New("gauge value not found")
 		}
-		return m.repo.AddMetric(metric), nil
+		return m.repo.AddMetric(ctx, metric), nil
 	case types.CounterType:
 		if metric.Delta == nil {
 			return nil, errors.New("counter delta not found")
 		}
-		return m.repo.AddMetric(metric), nil
+		return m.repo.AddMetric(ctx, metric), nil
 	default:
 		return nil, errors.New("type mem error")
 	}
