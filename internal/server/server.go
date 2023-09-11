@@ -27,7 +27,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
 	var repo repository.StorageRepository
-
+	log.Printf("addr:%s, database:%s, interva:%d, restore:%t, path:%s,", *cfg.Addr, *cfg.Database, *cfg.StoreInterval, *cfg.Restore, *cfg.FilePath)
 	if cfg.Database != nil && !strings.EqualFold("", *cfg.Database) {
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
 	}
