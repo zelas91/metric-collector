@@ -10,7 +10,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 //go:generate mockgen -package mocks -destination=./mocks/mock_service.go -source=service.go -package=mock_service Service
@@ -22,8 +21,7 @@ type Service interface {
 }
 
 var (
-	log  = logger.New()
-	once sync.Once
+	log = logger.New()
 )
 
 type MemService struct {
@@ -83,6 +81,13 @@ func (m *MemService) AddMetricJSON(metric repository.Metric) (*repository.Metric
 	}
 }
 
+func (m *MemService) Ping() error {
+	repo, ok := m.repo.(repository.Ping)
+	if ok {
+		return repo.Ping()
+	}
+	return errors.New("not implementation  interface Ping")
+}
 func checkValid(typ, value string) bool {
 	if !isValue(value) || !isType(typ) {
 		return false

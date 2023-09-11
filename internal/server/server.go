@@ -10,10 +10,13 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
-var serv *Server
+var (
+	serv *Server
+)
 
 type Server struct {
 	http *http.Server
@@ -23,15 +26,17 @@ type Server struct {
 func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
-	//db := repository.NewPostgresDB(*cfg.Database)
-
 	var repo repository.StorageRepository
-	if cfg.Restore == nil || cfg.FilePath == nil {
+
+	if cfg.Database != nil && !strings.EqualFold("", *cfg.Database) {
+		repo = repository.NewDBStorage(ctx, *cfg.Database)
+	}
+	if repo == nil && (cfg.Restore == nil || cfg.FilePath == nil) {
 		repo = repository.NewMemStorage()
-	} else {
+	}
+	if repo == nil {
 		repo = repository.NewFileStorage(ctx, cfg)
 	}
-
 	metric := controller.NewMetricHandler(service.NewMemService(ctx, repo, cfg))
 
 	serv = &Server{
