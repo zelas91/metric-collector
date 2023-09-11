@@ -22,7 +22,7 @@ func TestGetGauges(t *testing.T) {
 
 	var expectedGauges = map[string]float64{
 		"Alloc":         float64(stats.Alloc),
-		"GCCPUFraction": float64(stats.GCCPUFraction),
+		"GCCPUFraction": stats.GCCPUFraction,
 		"GCSys":         float64(stats.GCSys),
 		"RandomValue":   float64(stats.RandomValue),
 	}

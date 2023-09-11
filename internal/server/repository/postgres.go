@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
-	"log"
 )
 
 func NewPostgresDB(dbURL string) *sql.DB {

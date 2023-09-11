@@ -7,6 +7,9 @@ type StorageRepository interface {
 	GetMetrics() []Metric
 }
 
+type Shutdown interface {
+	Shutdown() error
+}
 type Metric struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter

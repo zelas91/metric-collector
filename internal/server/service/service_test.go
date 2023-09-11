@@ -18,7 +18,7 @@ func TestAddMetricJSON(t *testing.T) {
 		excepted repository.Metric
 		err      error
 	}
-	serv := NewMemService(context.Background(), repository.NewMemStore(), &config.Config{})
+	serv := NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})
 	gaugeValue := 20.123
 	deltaValue := int64(200)
 	tests := []struct {

@@ -25,7 +25,13 @@ func Run(ctx context.Context, cfg *config.Config) {
 
 	//db := repository.NewPostgresDB(*cfg.Database)
 
-	repo := repository.NewMemStore()
+	var repo repository.StorageRepository
+	if cfg.Restore == nil || cfg.FilePath == nil {
+		repo = repository.NewMemStorage()
+	} else {
+		repo = repository.NewFileStorage(ctx, cfg)
+	}
+
 	metric := controller.NewMetricHandler(service.NewMemService(ctx, repo, cfg))
 
 	serv = &Server{
@@ -44,9 +50,13 @@ func Run(ctx context.Context, cfg *config.Config) {
 func Shutdown(ctx context.Context) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	//if err := serv.repo.Shutdown(); err != nil {
-	//	log.Printf("repository shutdown err %v", err)
-	//}
+	r, ok := serv.repo.(repository.Shutdown)
+	if ok {
+		if err := r.Shutdown(); err != nil {
+			log.Printf("repository shutdown err %v", err)
+		}
+	}
+
 	if err := serv.http.Shutdown(ctxTimeout); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("shutdown server %v", err)
 	}
