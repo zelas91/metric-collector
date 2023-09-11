@@ -10,7 +10,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -28,7 +27,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 
 	var repo repository.StorageRepository
 	log.Printf("addr:%s, database:%s, interva:%d, restore:%t, path:%s,", *cfg.Addr, *cfg.Database, *cfg.StoreInterval, *cfg.Restore, *cfg.FilePath)
-	if cfg.Database != nil && !strings.EqualFold("", *cfg.Database) {
+	if cfg.Database != nil && *cfg.Database != "" {
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
 	}
 	if repo == nil && (cfg.Restore == nil || cfg.FilePath == nil) {
