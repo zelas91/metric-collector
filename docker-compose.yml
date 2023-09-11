@@ -8,5 +8,5 @@ services:
       - POSTGRES_DB=metrics
       - POSTGRES_USER=userm
       - POSTGRES_PASSWORD=12345678
-    volumes:
-      - ./data:/var/lib/postgresql/data
+#    volumes:
+#      - ./data:/var/lib/postgresql/data

@@ -73,7 +73,7 @@ func (m *MemService) AddMetricJSON(metric repository.Metric) (*repository.Metric
 		return m.repo.AddMetric(metric), nil
 	case types.CounterType:
 		if metric.Delta == nil {
-			return nil, errors.New("counter value not found")
+			return nil, errors.New("counter delta not found")
 		}
 		return m.repo.AddMetric(metric), nil
 	default:
@@ -88,12 +88,14 @@ func (m *MemService) Ping() error {
 	}
 	return errors.New("not implementation  interface Ping")
 }
+
 func checkValid(typ, value string) bool {
 	if !isValue(value) || !isType(typ) {
 		return false
 	}
 	return true
 }
+
 func isValue(value string) bool {
 	_, err := strconv.ParseFloat(value, 64)
 	if err != nil {

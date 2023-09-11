@@ -111,7 +111,7 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	}
 	var request repository.Metric
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Errorf("bind json  json error=%v ", err)
+		log.Errorf("request json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -124,6 +124,7 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, val)
 }
 func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
+
 	if c.GetHeader("Content-Type") != "application/json" {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
 		return
@@ -131,7 +132,7 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 
 	var request repository.Metric
 	if err := c.ShouldBindJSON(&request); err != nil {
-		log.Errorf("bind json  error=%v ", err)
+		log.Errorf("request json  error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
