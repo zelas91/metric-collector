@@ -75,10 +75,12 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	case types.CounterType:
 		result = fmt.Sprintf("%v", *mem.Delta)
 	}
-	if _, err := c.Writer.WriteString(fmt.Sprintf("%v", result)); err != nil {
+
+	if _, err := c.Writer.WriteString(result); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return
 	}
+	log.Info(c.Err())
 }
 
 func (h *MetricHandler) GetMetrics(c *gin.Context) {

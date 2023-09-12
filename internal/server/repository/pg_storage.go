@@ -8,12 +8,6 @@ import (
 	"github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/lib/pq"
-	"github.com/zelas91/metric-collector/internal/server/types"
-)
-
-var (
-	gauge   int
-	counter int
 )
 
 type DBStorage struct {
@@ -24,7 +18,6 @@ type DBStorage struct {
 func NewDBStorage(ctx context.Context, dbURL string) *DBStorage {
 	db := newPostgresDB(dbURL)
 	migration(db)
-	initType(db)
 	return &DBStorage{ctx: ctx, db: db}
 }
 
@@ -64,60 +57,27 @@ func (d *DBStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
 	isMetric, err := d.isMetric(ctx, metric.ID)
 	if err != nil {
 		log.Errorf("add metric err: %v", err)
+		return nil
 	}
 
 	if isMetric {
-		if err := d.updateMetric(ctx, metric); err != nil {
-			log.Errorf("add metric err:%v", err)
-			return nil
+		_, err = d.db.ExecContext(ctx, "update metrics set value=$1, delta=$2 where name=$3",
+			metric.Value, metric.Delta, metric.ID)
+		if err != nil {
+			log.Errorf("update metric err: %v", err)
 		}
 	} else {
-		if err := d.addMetric(ctx, metric); err != nil {
-			log.Errorf("add metric err:%v", err)
-			return nil
+		_, err = d.db.ExecContext(ctx, "INSERT INTO metrics (name, type, value, delta) SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4",
+			metric.ID, metric.Value, metric.Delta, metric.MType)
+		if err != nil {
+			log.Errorf("add metric err: %v", err)
 		}
 	}
 	return &metric
 }
 
-func (d *DBStorage) updateMetric(ctx context.Context, metric Metric) error {
-	switch metric.MType {
-	case types.GaugeType:
-		_, err := d.db.ExecContext(ctx, "update metrics set value=$1 where name=$2", *metric.Value, metric.ID)
-		if err != nil {
-			return fmt.Errorf("update metric err:%w", err)
-		}
-	case types.CounterType:
-		_, err := d.db.ExecContext(ctx, "update metrics set delta=$1 where name=$2", *metric.Delta, metric.ID)
-		if err != nil {
-			return fmt.Errorf("update metric err:%w", err)
-		}
-
-	}
-	return nil
-}
-
-func (d *DBStorage) addMetric(ctx context.Context, metric Metric) error {
-	switch metric.MType {
-	case types.GaugeType:
-		_, err := d.db.ExecContext(ctx, "insert into metrics (name , type , value) values ($1,$2,$3)",
-			metric.ID, d.convertType(metric.MType), *metric.Value)
-		if err != nil {
-			return fmt.Errorf("add metric err:%w", err)
-		}
-	case types.CounterType:
-		_, err := d.db.ExecContext(ctx, "insert into metrics (name , type , delta) values ($1,$2,$3)",
-			metric.ID, d.convertType(metric.MType), *metric.Delta)
-		if err != nil {
-			return fmt.Errorf("add metric err:%w", err)
-		}
-
-	}
-	return nil
-}
-
 func (d *DBStorage) GetMetric(ctx context.Context, name string) (*Metric, error) {
-	row := d.db.QueryRowContext(ctx, "select name, type, delta, value from metrics where name=$1", name)
+	row := d.db.QueryRowContext(ctx, "select name, (select name from metric_type where id=type)as type, delta, value from metrics where name=$1", name)
 	var metric Metric
 	if err := row.Scan(&metric.ID, &metric.MType, &metric.Delta, &metric.Value); err != nil {
 		log.Infof("get metrics row err:%v", err)
@@ -126,7 +86,27 @@ func (d *DBStorage) GetMetric(ctx context.Context, name string) (*Metric, error)
 }
 
 func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
-	return nil
+	var metrics []Metric
+	rows, err := d.db.QueryContext(ctx, "select name , (select name from metric_type where id=type)  as type, value ,delta from metrics")
+	if err != nil {
+		log.Errorf("get metrics query err: %v", err)
+		return nil
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Errorf("rows close err :%v", err)
+			return
+		}
+	}()
+	for rows.Next() {
+		var metric Metric
+		if err = rows.Scan(&metric.ID, &metric.MType, &metric.Value, &metric.Delta); err != nil {
+			log.Errorf("rows scan err: %v", err)
+			return nil
+		}
+		metrics = append(metrics, metric)
+	}
+	return metrics
 }
 
 func (d *DBStorage) Ping() error {
@@ -139,41 +119,4 @@ func (d *DBStorage) isMetric(ctx context.Context, name string) (bool, error) {
 		return false, fmt.Errorf("is metric err :%w", err)
 	}
 	return isMetric, nil
-}
-
-func (d *DBStorage) convertType(t string) int {
-	switch t {
-	case types.GaugeType:
-		return gauge
-	case types.CounterType:
-		return counter
-	}
-	return 0
-}
-func initType(db *sql.DB) {
-	rows, err := db.Query("select id, name from metric_type")
-	if err != nil {
-		log.Errorf("init type err:%v", err)
-		return
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			log.Errorf("init type rows close err:%v", err)
-		}
-	}()
-	var id int
-	var name string
-	for rows.Next() {
-		rows.Scan(&id, &name)
-		switch name {
-		case types.GaugeType:
-			gauge = id
-		case types.CounterType:
-			counter = id
-		}
-		if rows.Err() != nil {
-			log.Errorf("init type rows err:%v", err)
-			return
-		}
-	}
 }

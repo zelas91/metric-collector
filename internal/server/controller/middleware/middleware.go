@@ -56,8 +56,10 @@ type gzipWriter struct {
 }
 
 func (gw *gzipWriter) Write(data []byte) (int, error) {
-
 	return gw.writer.Write(data)
+}
+func (gw *gzipWriter) WriteString(data string) (int, error) {
+	return gw.writer.Write([]byte(data))
 }
 
 func getGzipWriter() *gzip.Writer {
@@ -66,12 +68,13 @@ func getGzipWriter() *gzip.Writer {
 	}
 	writer, err := gzip.NewWriterLevel(nil, gzip.BestCompression)
 	if err != nil {
-		log.Info("Failed to create gzip writer:", err)
+		log.Errorf("Failed to create gzip writer err: %v", err)
 		return nil
 	}
 
 	return writer
 }
+
 func releaseGzipWriter(writer *gzip.Writer) {
 	defer func(w *gzip.Writer) {
 		if err := writer.Close(); err != nil {
