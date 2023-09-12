@@ -49,3 +49,9 @@ func (m *MemStorage) GetMetrics(ctx context.Context) []Metric {
 	}
 	return metrics
 }
+func (m *MemStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
+	for _, metric := range metrics {
+		_ = m.AddMetric(ctx, metric)
+	}
+	return nil
+}

@@ -11,6 +11,7 @@ func (h *MetricHandler) InitRoutes() *gin.Engine {
 	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout)
 	router.GET("/", h.GetMetrics)
 	router.GET("/ping", h.Ping)
+	router.POST("/updates", h.AddMetrics)
 	update := router.Group("/update")
 	value := router.Group("/value")
 	{

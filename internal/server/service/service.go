@@ -18,6 +18,7 @@ type Service interface {
 	GetMetric(ctx context.Context, name string) (*repository.Metric, error)
 	GetMetrics(ctx context.Context) []repository.Metric
 	AddMetricJSON(ctx context.Context, metric repository.Metric) (*repository.Metric, error)
+	AddMetrics(ctx context.Context, metrics []repository.Metric) error
 }
 
 var (
@@ -89,6 +90,9 @@ func (m *MemService) Ping() error {
 	return errors.New("not implementation  interface Ping")
 }
 
+func (m *MemService) AddMetrics(ctx context.Context, metrics []repository.Metric) error {
+	return m.repo.AddMetrics(ctx, metrics)
+}
 func checkValid(typ, value string) bool {
 	if !isValue(value) || !isType(typ) {
 		return false

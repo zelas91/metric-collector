@@ -80,7 +80,6 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, "internal server error")
 		return
 	}
-	log.Info(c.Err())
 }
 
 func (h *MetricHandler) GetMetrics(c *gin.Context) {
@@ -158,4 +157,22 @@ func (h *MetricHandler) Ping(c *gin.Context) {
 		return
 	}
 	c.AbortWithStatus(http.StatusOK)
+}
+
+func (h *MetricHandler) AddMetrics(c *gin.Context) {
+	if c.GetHeader("Content-Type") != "application/json" {
+		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
+		return
+	}
+	var request []repository.Metric
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Errorf("request json  error=%v ", err)
+		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.memService.AddMetrics(c.Request.Context(), request); err != nil {
+		log.Errorf("add metrics err: %v", err)
+		payload.NewErrorResponseJSON(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 }

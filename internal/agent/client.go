@@ -26,64 +26,64 @@ func NewClientHTTP() *ClientHTTP {
 	return &ClientHTTP{Client: client}
 }
 
-func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
-	for name, value := range s.GetGauges() {
-		body, err := json.Marshal(repository.Metric{
+func createGauges(s *Stats) []repository.Metric {
+	gauges := s.GetGauges()
+	metrics := make([]repository.Metric, 0, len(gauges))
+	for name, value := range gauges {
+		val := value
+		metrics = append(metrics, repository.Metric{
 			ID:    name,
+			Value: &val,
 			MType: types.GaugeType,
-			Value: &value,
 		})
-
-		if err != nil {
-			return fmt.Errorf("json marshal eroor = %v", err)
-		}
-		gzipBody, err := gzipCompress(body)
-		if err != nil {
-			return fmt.Errorf("error compress body %v", err)
-		}
-
-		resp, err := c.Client.R().
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Content-Encoding", "gzip").
-			SetBody(gzipBody).
-			Post(baseURL)
-
-		if err != nil {
-			return fmt.Errorf("error post request %v", err)
-		}
-		if resp.StatusCode() != 200 {
-			return errors.New("answer result is not correct")
-		}
 	}
+	return metrics
+}
 
-	for name, value := range s.GetCounters() {
-		body, err := json.Marshal(repository.Metric{
+func createCounters(s *Stats) []repository.Metric {
+	counters := s.GetCounters()
+	metrics := make([]repository.Metric, 0, len(counters))
+	for name, value := range counters {
+		val := value
+		metrics = append(metrics, repository.Metric{
 			ID:    name,
+			Delta: &val,
 			MType: types.CounterType,
-			Delta: &value,
 		})
-		if err != nil {
-			return fmt.Errorf("json marshal eroor = %v", err)
-		}
+	}
+	return metrics
+}
 
-		gzipBody, err := gzipCompress(body)
-		if err != nil {
-			return fmt.Errorf("error compress body %v", err)
-		}
-		resp, err := c.Client.R().
-			SetBody(gzipBody).
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Content-Encoding", "gzip").
-			Post(baseURL)
-		if err != nil {
-			return fmt.Errorf("error post request %v", err)
-		}
-		if resp.StatusCode() != 200 {
-			return errors.New("answer result is not correct")
-		}
+func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
+
+	gauges := createGauges(s)
+	counters := createCounters(s)
+
+	metrics := append(gauges, counters...)
+
+	body, err := json.Marshal(metrics)
+	if err != nil {
+		return fmt.Errorf("update metrics marshal err :%w", err)
+	}
+	gzipBody, err := gzipCompress(body)
+	if err != nil {
+		return fmt.Errorf("error compress body %w", err)
+	}
+	resp, err := c.Client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetBody(gzipBody).
+		Post(baseURL)
+
+	if err != nil {
+		return fmt.Errorf("error post request %w", err)
+	}
+	if resp.StatusCode() != 200 {
+		return errors.New("answer result is not correct")
 	}
 	return nil
 }
+
 func gzipCompress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	w, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)

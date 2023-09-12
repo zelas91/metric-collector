@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
@@ -36,8 +37,9 @@ func migration(db *sql.DB) {
 		return
 	}
 
-	if err := m.Up(); err != nil {
+	if err = m.Up(); err != nil {
 		log.Errorf("migration UP err : %v", err)
+		return
 	}
 }
 
@@ -65,12 +67,14 @@ func (d *DBStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
 			metric.Value, metric.Delta, metric.ID)
 		if err != nil {
 			log.Errorf("update metric err: %v", err)
+			return nil
 		}
 	} else {
 		_, err = d.db.ExecContext(ctx, "INSERT INTO metrics (name, type, value, delta) SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4",
 			metric.ID, metric.Value, metric.Delta, metric.MType)
 		if err != nil {
 			log.Errorf("add metric err: %v", err)
+			return nil
 		}
 	}
 	return &metric
@@ -80,7 +84,8 @@ func (d *DBStorage) GetMetric(ctx context.Context, name string) (*Metric, error)
 	row := d.db.QueryRowContext(ctx, "select name, (select name from metric_type where id=type)as type, delta, value from metrics where name=$1", name)
 	var metric Metric
 	if err := row.Scan(&metric.ID, &metric.MType, &metric.Delta, &metric.Value); err != nil {
-		log.Infof("get metrics row err:%v", err)
+		log.Errorf("get metrics row err:%v", err)
+		return nil, err
 	}
 	return &metric, nil
 }
@@ -123,4 +128,53 @@ func (d *DBStorage) isMetric(ctx context.Context, name string) (bool, error) {
 		return false, fmt.Errorf("is metric err :%w", err)
 	}
 	return isMetric, nil
+}
+
+func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
+
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("new transactional err: %w ", err)
+	}
+
+	add, err := tx.PrepareContext(ctx, "INSERT INTO metrics (name, type, value, delta) SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4")
+	if err != nil {
+		return fmt.Errorf("add metrics, add prepare err: %w", err)
+	}
+
+	update, err := tx.PrepareContext(ctx, "update metrics set value=$1, delta=$2 where name=$3")
+	if err != nil {
+		return fmt.Errorf("add metrics, update prepare err: %w", err)
+	}
+
+	existsMetric, err := tx.PrepareContext(ctx, "select exists (select 1 from metrics where name=$1)")
+	if err != nil {
+		return fmt.Errorf("add metrics, exists prepare err: %w", err)
+	}
+
+	defer func() {
+		if err = tx.Rollback(); err != nil && !errors.Is(sql.ErrTxDone, err) {
+			log.Errorf("Rollback err: %v", err)
+			return
+		}
+	}()
+
+	var isMetrics bool
+
+	for _, metric := range metrics {
+		if err = existsMetric.QueryRowContext(ctx, metric.ID).Scan(&isMetrics); err != nil {
+			return fmt.Errorf("query exists err: %w", err)
+		}
+
+		if isMetrics {
+			if _, err = update.ExecContext(ctx, metric.Value, metric.Delta, metric.ID); err != nil {
+				return fmt.Errorf("query update err: %w", err)
+			}
+		} else {
+			if _, err = add.ExecContext(ctx, metric.ID, metric.Value, metric.Delta, metric.MType); err != nil {
+				return fmt.Errorf("query update err: %w", err)
+			}
+		}
+	}
+	return tx.Commit()
 }

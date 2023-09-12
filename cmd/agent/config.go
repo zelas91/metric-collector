@@ -43,6 +43,6 @@ func NewConfig() *Config {
 	if cfg.PollInterval <= 0 {
 		cfg.PollInterval = *pollInterval
 	}
-	cfg.BaseURL = fmt.Sprintf("http://%s/update", cfg.BaseURL)
+	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
 }

@@ -21,7 +21,7 @@ func TestUpdateMetrics(t *testing.T) {
 		client := NewClientHTTP()
 		s := NewStats()
 		s.ReadStats()
-		err := client.UpdateMetrics(s, server.URL+"/update")
+		err := client.UpdateMetrics(s, server.URL+"/updates")
 		assert.NoError(t, err)
 	})
 

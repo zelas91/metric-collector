@@ -7,6 +7,7 @@ type StorageRepository interface {
 	AddMetric(ctx context.Context, metrics Metric) *Metric
 	GetMetric(ctx context.Context, name string) (*Metric, error)
 	GetMetrics(ctx context.Context) []Metric
+	AddMetrics(ctx context.Context, metrics []Metric) error
 }
 
 type Shutdown interface {

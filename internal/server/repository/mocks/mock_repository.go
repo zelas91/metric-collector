@@ -49,6 +49,20 @@ func (mr *MockStorageRepositoryMockRecorder) AddMetric(ctx, metrics interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMetric", reflect.TypeOf((*MockStorageRepository)(nil).AddMetric), ctx, metrics)
 }
 
+// AddMetrics mocks base method.
+func (m *MockStorageRepository) AddMetrics(ctx context.Context, metrics []repository.Metric) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMetrics", ctx, metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMetrics indicates an expected call of AddMetrics.
+func (mr *MockStorageRepositoryMockRecorder) AddMetrics(ctx, metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMetrics", reflect.TypeOf((*MockStorageRepository)(nil).AddMetrics), ctx, metrics)
+}
+
 // GetMetric mocks base method.
 func (m *MockStorageRepository) GetMetric(ctx context.Context, name string) (*repository.Metric, error) {
 	m.ctrl.T.Helper()

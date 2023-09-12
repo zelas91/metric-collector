@@ -138,3 +138,10 @@ func (f *FileStorage) getMetricsFile() *MemStorage {
 	}
 	return &MemStorage{mem: mem}
 }
+
+func (f *FileStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
+	for _, metric := range metrics {
+		_ = f.AddMetric(ctx, metric)
+	}
+	return nil
+}
