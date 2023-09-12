@@ -56,13 +56,19 @@ func createCounters(s *Stats) []repository.Metric {
 
 type effectorUpdateMetrics func(s *Stats, baseURL string) error
 
-func retryUpdateMetrics(effector effectorUpdateMetrics) effectorUpdateMetrics {
+func retryUpdateMetrics(effector effectorUpdateMetrics, ch <-chan time.Time) effectorUpdateMetrics {
 	return func(s *Stats, baseURL string) error {
 		var delay time.Duration
 		retries := 3
 		for r := 1; ; r++ {
 			delay += 1 * time.Second
-			<-time.After(delay)
+			select {
+			case <-time.After(delay):
+			case <-ch:
+				return nil
+
+			}
+
 			if err := effector(s, baseURL); err == nil || r >= retries {
 				return err
 			}
@@ -131,7 +137,7 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) 
 			case <-tickerReport.C:
 				if err := c.UpdateMetrics(s, baseURL); err != nil {
 					log.Errorf("update metrics err: %v", err)
-					r := retryUpdateMetrics(c.UpdateMetrics)
+					r := retryUpdateMetrics(c.UpdateMetrics, tickerReport.C)
 					if err = r(s, baseURL); err != nil {
 						log.Errorf("retry err: %v", err)
 					}
