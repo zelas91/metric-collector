@@ -56,19 +56,16 @@ func createCounters(s *Stats) []repository.Metric {
 
 type effectorUpdateMetrics func(s *Stats, baseURL string) error
 
-func retryUpdateMetrics(effector effectorUpdateMetrics, ch <-chan time.Time) effectorUpdateMetrics {
+func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) effectorUpdateMetrics {
 	return func(s *Stats, baseURL string) error {
-		var delay time.Duration
 		retries := 3
 		for r := 1; ; r++ {
-			delay += 1 * time.Second
+			delay := time.Duration(r) * time.Second
 			select {
 			case <-time.After(delay):
-			case <-ch:
+			case <-exit:
 				return nil
-
 			}
-
 			if err := effector(s, baseURL); err == nil || r >= retries {
 				return err
 			}
