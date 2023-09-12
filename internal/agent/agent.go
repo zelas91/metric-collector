@@ -26,7 +26,7 @@ func (s *Stats) GetGauges() map[string]float64 {
 		"GCSys":         float64(s.GCSys),
 		"HeapAlloc":     float64(s.HeapAlloc),
 		"BuckHashSys":   float64(s.BuckHashSys),
-		"GCCPUFraction": float64(s.GCCPUFraction),
+		"GCCPUFraction": s.GCCPUFraction,
 		"HeapIdle":      float64(s.HeapIdle),
 		"HeapInuse":     float64(s.HeapInuse),
 		"HeapObjects":   float64(s.HeapObjects),
