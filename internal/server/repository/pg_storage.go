@@ -106,6 +106,10 @@ func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
 		}
 		metrics = append(metrics, metric)
 	}
+	if err = rows.Err(); err != nil {
+		log.Errorf("rows err: %v", err)
+		return nil
+	}
 	return metrics
 }
 
