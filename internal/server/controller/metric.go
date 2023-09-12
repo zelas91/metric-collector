@@ -170,6 +170,7 @@ func (h *MetricHandler) AddMetrics(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if err := h.memService.AddMetrics(c.Request.Context(), request); err != nil {
 		log.Errorf("add metrics err: %v", err)
 		payload.NewErrorResponseJSON(c, http.StatusInternalServerError, err.Error())

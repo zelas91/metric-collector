@@ -7,7 +7,7 @@ create table metrics
     id  bigserial not null unique ,
     name  varchar,
     type  int8 REFERENCES metric_type(id),
-    delta integer,
+    delta bigint,
     value double precision
 );
 
