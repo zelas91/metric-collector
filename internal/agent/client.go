@@ -64,7 +64,7 @@ func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) e
 			select {
 			case <-time.After(delay):
 			case <-exit:
-				return nil
+				return errors.New("retry deadline exceeded")
 			}
 			if err := effector(s, baseURL); err == nil || r >= retries {
 				return err
