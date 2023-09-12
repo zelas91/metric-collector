@@ -2,7 +2,7 @@ package repository
 
 import "context"
 
-//go:generate mockgen -package mocks -destination=./mocks/mock_Repository.go -source=repository.go -package=mock StorageRepository
+//go:generate mockgen -package mocks -destination=./mocks/mock_repository.go -source=repository.go -package=mock StorageRepository
 type StorageRepository interface {
 	AddMetric(ctx context.Context, metrics Metric) *Metric
 	GetMetric(ctx context.Context, name string) (*Metric, error)
