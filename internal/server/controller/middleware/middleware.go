@@ -98,7 +98,7 @@ func GzipDecompress(c *gin.Context) {
 }
 
 func Timeout(c *gin.Context) {
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 100*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1*time.Second)
 	defer cancel()
 
 	c.Request = c.Request.WithContext(ctx)
