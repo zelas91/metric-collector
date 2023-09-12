@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/payload"
 	"net/http"
 	"strings"
 	"sync"
@@ -114,13 +115,10 @@ func Timeout(c *gin.Context) {
 	case <-ctx.Done():
 		err := ctx.Err()
 		if errors.Is(err, context.DeadlineExceeded) {
-			c.AbortWithStatusJSON(http.StatusGatewayTimeout, gin.H{"error": "Request timeout"})
+			payload.NewErrorResponse(c, http.StatusGatewayTimeout, err.Error())
 			return
 		}
-		if err = c.AbortWithError(http.StatusInternalServerError, err); err != nil {
-			log.Errorf("timeout middleware err :%v", err)
-			return
-		}
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
