@@ -53,7 +53,7 @@ func (h *MetricHandler) AddMetric(c *gin.Context) {
 	value := c.Param(paramValue)
 	t := c.Param(paramType)
 
-	if _, err := h.memService.AddMetric(c, c.Param(paramName), t, value); err != nil {
+	if _, err := h.memService.AddMetric(c.Request.Context(), c.Param(paramName), t, value); err != nil {
 		payload.NewErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -63,7 +63,7 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	t := c.Param(paramType)
 	name := c.Param(paramName)
-	mem, err := h.memService.GetMetric(c, name)
+	mem, err := h.memService.GetMetric(c.Request.Context(), name)
 	if err != nil || !strings.EqualFold(t, mem.MType) {
 		payload.NewErrorResponse(c, http.StatusNotFound, "not found")
 		return
@@ -90,7 +90,7 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	metrics := h.memService.GetMetrics(c)
+	metrics := h.memService.GetMetrics(c.Request.Context())
 	mapMetrics := make(map[string]interface{}, len(metrics))
 	for _, metric := range metrics {
 		switch metric.MType {
@@ -117,7 +117,7 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	val, err := h.memService.GetMetric(c, request.ID)
+	val, err := h.memService.GetMetric(c.Request.Context(), request.ID)
 	if err != nil {
 		log.Errorf("controller get metric error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusNotFound, err.Error())
@@ -138,7 +138,7 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	res, err := h.memService.AddMetricJSON(c, request)
+	res, err := h.memService.AddMetricJSON(c.Request.Context(), request)
 	if err != nil {
 		log.Errorf("add metric json error=%v ", err)
 		payload.NewErrorResponseJSON(c, http.StatusBadRequest, err.Error())

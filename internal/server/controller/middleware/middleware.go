@@ -2,8 +2,11 @@ package middleware
 
 import (
 	"compress/gzip"
+	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -91,4 +94,33 @@ func GzipDecompress(c *gin.Context) {
 		c.Request.Header.Del("Content-Length")
 	}
 	c.Next()
+}
+
+func Timeout(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1*time.Second)
+	defer cancel()
+
+	c.Request = c.Request.WithContext(ctx)
+
+	ch := make(chan struct{})
+	go func() {
+		c.Next()
+		close(ch)
+	}()
+
+	select {
+	case <-ch:
+		return
+	case <-ctx.Done():
+		err := ctx.Err()
+		if errors.Is(err, context.DeadlineExceeded) {
+			c.AbortWithStatusJSON(http.StatusGatewayTimeout, gin.H{"error": "Request timeout"})
+			return
+		}
+		if err = c.AbortWithError(http.StatusInternalServerError, err); err != nil {
+			log.Errorf("timeout middleware err :%v", err)
+			return
+		}
+		return
+	}
 }

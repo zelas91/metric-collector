@@ -8,7 +8,7 @@ import (
 func (h *MetricHandler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress)
+	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout)
 	router.GET("/", h.GetMetrics)
 	router.GET("/ping", h.Ping)
 	update := router.Group("/update")

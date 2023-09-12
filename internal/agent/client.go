@@ -41,11 +41,13 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		if err != nil {
 			return fmt.Errorf("error compress body %v", err)
 		}
+
 		resp, err := c.Client.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Content-Encoding", "gzip").
 			SetBody(gzipBody).
 			Post(baseURL)
+
 		if err != nil {
 			return fmt.Errorf("error post request %v", err)
 		}
