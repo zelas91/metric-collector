@@ -63,7 +63,7 @@ func (d *DBStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
 	}
 
 	if isMetric {
-		_, err = d.db.ExecContext(ctx, "update metrics set value=$1, delta=$2 where name=$3",
+		_, err = d.db.ExecContext(ctx, "update metrics set value=$1, delta=delta+$2 where name=$3",
 			metric.Value, metric.Delta, metric.ID)
 		if err != nil {
 			log.Errorf("update metric err: %v", err)
@@ -142,7 +142,7 @@ func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 		return fmt.Errorf("add metrics, add prepare err: %w", err)
 	}
 
-	update, err := tx.PrepareContext(ctx, "update metrics set value=$1, delta=$2 where name=$3")
+	update, err := tx.PrepareContext(ctx, "update metrics set value=$1, delta=delta+$2 where name=$3")
 	if err != nil {
 		return fmt.Errorf("add metrics, update prepare err: %w", err)
 	}
