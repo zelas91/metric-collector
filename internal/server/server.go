@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
@@ -28,11 +29,12 @@ func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
 	var repo repository.StorageRepository
-
+	a := "asdasdasdas 543434534534 bdfhgdfgdrf"
+	fmt.Println(strings.TrimSpace(a))
 	switch {
 	case cfg.Database != nil && *cfg.Database != "":
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
-	case repo == nil && len(strings.TrimSpace(*cfg.FilePath)) == 0:
+	case repo == nil && strings.TrimSpace(*cfg.FilePath) != "":
 		repo = repository.NewMemStorage()
 	default:
 		repo = repository.NewFileStorage(ctx, cfg)
