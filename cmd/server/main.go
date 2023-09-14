@@ -18,7 +18,7 @@ func main() {
 	stop(ctx)
 }
 func stop(ctx context.Context) {
-	logger.Shutdown()
 	server.Shutdown(ctx)
+	logger.Shutdown()
 	os.Exit(0)
 }

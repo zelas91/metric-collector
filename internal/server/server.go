@@ -4,17 +4,19 @@ import (
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
-	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 var (
 	serv *Server
+	log  = logger.New()
 )
 
 type Server struct {
@@ -24,18 +26,17 @@ type Server struct {
 
 func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
-
 	var repo repository.StorageRepository
 
-	if cfg.Database != nil && *cfg.Database != "" {
+	switch {
+	case cfg.Database != nil && *cfg.Database != "":
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
-	}
-	if repo == nil && (cfg.Restore == nil || cfg.FilePath == nil) {
+	case repo == nil && len(strings.TrimSpace(*cfg.FilePath)) == 0:
 		repo = repository.NewMemStorage()
-	}
-	if repo == nil {
+	default:
 		repo = repository.NewFileStorage(ctx, cfg)
 	}
+
 	metric := controller.NewMetricHandler(service.NewMemService(ctx, repo, cfg))
 
 	serv = &Server{
@@ -50,6 +51,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 			log.Fatalf("ListenAndServe %v", err)
 		}
 	}()
+	log.Info("start server")
 }
 func Shutdown(ctx context.Context) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -57,11 +59,12 @@ func Shutdown(ctx context.Context) {
 	r, ok := serv.repo.(repository.Shutdown)
 	if ok {
 		if err := r.Shutdown(); err != nil {
-			log.Printf("repository shutdown err %v", err)
+			log.Errorf("repository shutdown err %v", err)
 		}
 	}
 
 	if err := serv.http.Shutdown(ctxTimeout); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("shutdown server %v", err)
 	}
+	log.Info("server stop")
 }

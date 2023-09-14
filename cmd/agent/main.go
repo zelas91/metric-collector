@@ -14,10 +14,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	_ = cancel
 	agent.Run(ctx, conf.PollInterval, conf.ReportInterval, conf.BaseURL)
+	log.Info("start agent")
 	<-ctx.Done()
 	stop()
 }
 func stop() {
+	log.Info("stop agent")
 	logger.Shutdown()
 	os.Exit(0)
 }
