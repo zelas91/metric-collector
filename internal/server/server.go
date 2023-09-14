@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
@@ -10,7 +11,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -28,16 +28,15 @@ func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
 	var repo repository.StorageRepository
-
+	fmt.Println(repo == nil)
 	switch {
 	case cfg.Database != nil && *cfg.Database != "":
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
-	case repo == nil && (cfg.FilePath == nil || len(strings.TrimSpace(*cfg.FilePath)) == 0):
+	case repo == nil && (cfg.Restore == nil || cfg.FilePath == nil):
 		repo = repository.NewMemStorage()
 	default:
 		repo = repository.NewFileStorage(ctx, cfg)
 	}
-
 	metric := controller.NewMetricHandler(service.NewMemService(ctx, repo, cfg))
 
 	serv = &Server{
