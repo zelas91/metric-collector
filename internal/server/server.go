@@ -10,7 +10,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -28,12 +27,13 @@ func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 	var repo repository.StorageRepository
 
-	switch {
-	case cfg.Database != nil && *cfg.Database != "":
+	if cfg.Database != nil && *cfg.Database != "" {
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
-	case repo == nil && len(strings.TrimSpace(*cfg.FilePath)) == 0:
+	}
+	if repo == nil && (cfg.Restore == nil || cfg.FilePath == nil) {
 		repo = repository.NewMemStorage()
-	default:
+	}
+	if repo == nil {
 		repo = repository.NewFileStorage(ctx, cfg)
 	}
 
