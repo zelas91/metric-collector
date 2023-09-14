@@ -18,29 +18,29 @@ type DBStorage struct {
 
 func NewDBStorage(ctx context.Context, dbURL string) *DBStorage {
 	db := newPostgresDB(dbURL)
-	migration(db)
+	if err := migration(db); err != nil {
+		log.Fatal(err)
+	}
 	return &DBStorage{ctx: ctx, db: db}
 }
 
-func migration(db *sql.DB) {
+func migration(db *sql.DB) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		log.Errorf("migration error WithInstance, err:%v", err)
-		return
+		return fmt.Errorf("migration error WithInstance, err:%v", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://./schema",
 		"metrics", driver)
 	if err != nil {
-		log.Errorf("migration NewWithDatabaseInstance, err:%v", err)
-		return
+		return fmt.Errorf("migration NewWithDatabaseInstance, err:%v", err)
 	}
 
-	if err = m.Up(); err != nil {
-		log.Errorf("migration UP err : %v", err)
-		return
+	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("migration UP err : %v", err)
 	}
+	return nil
 }
 
 func newPostgresDB(dbURL string) *sql.DB {
@@ -56,7 +56,7 @@ func (d *DBStorage) Shutdown() error {
 }
 
 func (d *DBStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
-	isMetric, err := d.isMetric(ctx, metric.ID)
+	isMetric, err := d.isMetricExists(ctx, metric.ID)
 	if err != nil {
 		log.Errorf("add metric err: %v", err)
 		return nil
@@ -121,7 +121,7 @@ func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
 func (d *DBStorage) Ping() error {
 	return d.db.Ping()
 }
-func (d *DBStorage) isMetric(ctx context.Context, name string) (bool, error) {
+func (d *DBStorage) isMetricExists(ctx context.Context, name string) (bool, error) {
 	var isMetric bool
 	if err := d.db.QueryRowContext(ctx, "select exists (select 1 from metrics where name=$1)", name).
 		Scan(&isMetric); err != nil {
