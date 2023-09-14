@@ -10,15 +10,15 @@ import (
 )
 
 func main() {
-	conf := NewConfig()
+	cfg := NewConfig()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	_ = cancel
-	server.Run(conf, ctx)
+	server.Run(ctx, cfg)
 	<-ctx.Done()
 	stop(ctx)
 }
 func stop(ctx context.Context) {
-	logger.Shutdown()
 	server.Shutdown(ctx)
+	logger.Shutdown()
 	os.Exit(0)
 }

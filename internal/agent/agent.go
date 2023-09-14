@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"github.com/zelas91/metric-collector/internal/server/types"
 	"math/rand"
 	"runtime"
 )
@@ -21,41 +20,41 @@ func (s *Stats) ReadStats() {
 	s.PollCount += 1
 	s.RandomValue = rand.Int()
 }
-func (s *Stats) GetGauges() map[string]types.Gauge {
-	return map[string]types.Gauge{
-		"Alloc":         types.Gauge(s.Alloc),
-		"GCSys":         types.Gauge(s.GCSys),
-		"HeapAlloc":     types.Gauge(s.HeapAlloc),
-		"BuckHashSys":   types.Gauge(s.BuckHashSys),
-		"GCCPUFraction": types.Gauge(s.GCCPUFraction),
-		"HeapIdle":      types.Gauge(s.HeapIdle),
-		"HeapInuse":     types.Gauge(s.HeapInuse),
-		"HeapObjects":   types.Gauge(s.HeapObjects),
-		"HeapReleased":  types.Gauge(s.HeapReleased),
-		"HeapSys":       types.Gauge(s.HeapSys),
-		"LastGC":        types.Gauge(s.LastGC),
-		"Lookups":       types.Gauge(s.Lookups),
-		"MCacheInuse":   types.Gauge(s.MCacheInuse),
-		"MCacheSys":     types.Gauge(s.MCacheSys),
-		"MSpanInuse":    types.Gauge(s.MSpanInuse),
-		"MSpanSys":      types.Gauge(s.MSpanSys),
-		"Mallocs":       types.Gauge(s.Mallocs),
-		"NextGC":        types.Gauge(s.NextGC),
-		"NumForcedGC":   types.Gauge(s.NumForcedGC),
-		"NumGC":         types.Gauge(s.NumGC),
-		"OtherSys":      types.Gauge(s.OtherSys),
-		"PauseTotalNs":  types.Gauge(s.PauseTotalNs),
-		"StackInuse":    types.Gauge(s.StackInuse),
-		"StackSys":      types.Gauge(s.StackSys),
-		"Sys":           types.Gauge(s.Sys),
-		"TotalAlloc":    types.Gauge(s.TotalAlloc),
-		"RandomValue":   types.Gauge(s.RandomValue),
-		"Frees":         types.Gauge(s.Frees),
+func (s *Stats) GetGauges() map[string]float64 {
+	return map[string]float64{
+		"Alloc":         float64(s.Alloc),
+		"GCSys":         float64(s.GCSys),
+		"HeapAlloc":     float64(s.HeapAlloc),
+		"BuckHashSys":   float64(s.BuckHashSys),
+		"GCCPUFraction": s.GCCPUFraction,
+		"HeapIdle":      float64(s.HeapIdle),
+		"HeapInuse":     float64(s.HeapInuse),
+		"HeapObjects":   float64(s.HeapObjects),
+		"HeapReleased":  float64(s.HeapReleased),
+		"HeapSys":       float64(s.HeapSys),
+		"LastGC":        float64(s.LastGC),
+		"Lookups":       float64(s.Lookups),
+		"MCacheInuse":   float64(s.MCacheInuse),
+		"MCacheSys":     float64(s.MCacheSys),
+		"MSpanInuse":    float64(s.MSpanInuse),
+		"MSpanSys":      float64(s.MSpanSys),
+		"Mallocs":       float64(s.Mallocs),
+		"NextGC":        float64(s.NextGC),
+		"NumForcedGC":   float64(s.NumForcedGC),
+		"NumGC":         float64(s.NumGC),
+		"OtherSys":      float64(s.OtherSys),
+		"PauseTotalNs":  float64(s.PauseTotalNs),
+		"StackInuse":    float64(s.StackInuse),
+		"StackSys":      float64(s.StackSys),
+		"Sys":           float64(s.Sys),
+		"TotalAlloc":    float64(s.TotalAlloc),
+		"RandomValue":   float64(s.RandomValue),
+		"Frees":         float64(s.Frees),
 	}
 }
 
-func (s *Stats) GetCounters() map[string]types.Counter {
-	return map[string]types.Counter{
-		"PollCount": types.Counter(s.PollCount),
+func (s *Stats) GetCounters() map[string]int64 {
+	return map[string]int64{
+		"PollCount": s.PollCount,
 	}
 }

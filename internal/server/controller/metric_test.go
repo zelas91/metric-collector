@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zelas91/metric-collector/internal/server/config"
-	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -31,14 +30,14 @@ func TestAddMetric(t *testing.T) {
 	}{
 		{
 			name:    "Bad request #1",
-			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())),
+			handler: NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})),
 			url:     "/update/unknown/testCounter/100",
 			method:  http.MethodPost,
 			want:    want{code: 400, body: ""},
 		},
 		{
 			name:    "Ok #3",
-			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())),
+			handler: NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: 200, body: ""},
 			url:     "/update/counter/someMetric/527",
 			method:  http.MethodPost,
@@ -66,12 +65,13 @@ func TestAddMetric(t *testing.T) {
 	}
 
 }
+
 func TestGetMetric(t *testing.T) {
-	serv := service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())
-	_ = serv.AddMetric("cpu", types.GaugeType, "0.85")
-	_ = serv.AddMetric("memory", types.GaugeType, "0.6")
-	_ = serv.AddMetric("requests", types.CounterType, "100")
-	_ = serv.AddMetric("errors", types.CounterType, "5")
+	serv := service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})
+	_, _ = serv.AddMetric(context.Background(), "cpu", types.GaugeType, "0.85")
+	_, _ = serv.AddMetric(context.Background(), "memory", types.GaugeType, "0.6")
+	_, _ = serv.AddMetric(context.Background(), "requests", types.CounterType, "100")
+	_, _ = serv.AddMetric(context.Background(), "errors", types.CounterType, "5")
 	handler := NewMetricHandler(serv)
 	tests := []struct {
 		name string
@@ -114,7 +114,7 @@ func TestAddMetricJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		handler *MetricHandler
-		body    payload.Metrics
+		body    repository.Metric
 		header  http.Header
 		want    want
 		url     string
@@ -122,9 +122,9 @@ func TestAddMetricJSON(t *testing.T) {
 	}{
 		{
 			name:    "StatusUnsupportedMediaType #1",
-			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())),
+			handler: NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})),
 			url:     "/update/",
-			body: payload.Metrics{
+			body: repository.Metric{
 				ID: "Test",
 			},
 			header: map[string][]string{"Content-Type": {"text/html"}},
@@ -133,10 +133,10 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Ok  gauge #2",
-			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())),
+			handler: NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: http.StatusOK, body: "{\"id\":\"Test\",\"type\":\"gauge\",\"value\":20.12}"},
 			url:     "/update/",
-			body: payload.Metrics{
+			body: repository.Metric{
 				ID:    "Test",
 				MType: types.GaugeType,
 				Value: &gaugeVal,
@@ -146,10 +146,10 @@ func TestAddMetricJSON(t *testing.T) {
 		},
 		{
 			name:    "Bad request  #3",
-			handler: NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())),
+			handler: NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})),
 			want:    want{code: http.StatusBadRequest, body: "{\"message\":\"counter delta not found\"}"},
 			url:     "/update/",
-			body: payload.Metrics{
+			body: repository.Metric{
 				ID:    "Test",
 				MType: types.CounterType,
 				Value: &gaugeVal,
@@ -183,12 +183,13 @@ func TestAddMetricJSON(t *testing.T) {
 		})
 	}
 }
+
 func TestGetMetricJSON(t *testing.T) {
-	serv := service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background())
-	_ = serv.AddMetric("cpu", types.GaugeType, "0.85")
-	_ = serv.AddMetric("memory", types.GaugeType, "0.6")
-	_ = serv.AddMetric("requests", types.CounterType, "100")
-	_ = serv.AddMetric("errors", types.CounterType, "5")
+	serv := service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{})
+	_, _ = serv.AddMetric(context.Background(), "cpu", types.GaugeType, "0.85")
+	_, _ = serv.AddMetric(context.Background(), "memory", types.GaugeType, "0.6")
+	_, _ = serv.AddMetric(context.Background(), "requests", types.CounterType, "100")
+	_, _ = serv.AddMetric(context.Background(), "errors", types.CounterType, "5")
 	handler := NewMetricHandler(serv)
 	type result struct {
 		statusCode int
@@ -198,7 +199,7 @@ func TestGetMetricJSON(t *testing.T) {
 		name   string
 		want   result
 		url    string
-		body   payload.Metrics
+		body   repository.Metric
 		header http.Header
 		method string
 	}{
@@ -209,7 +210,7 @@ func TestGetMetricJSON(t *testing.T) {
 				body:       "{\"id\":\"cpu\",\"type\":\"gauge\",\"value\":0.85}",
 			},
 			url: "/value/",
-			body: payload.Metrics{
+			body: repository.Metric{
 				ID:    "cpu",
 				MType: types.GaugeType,
 			},
@@ -219,10 +220,10 @@ func TestGetMetricJSON(t *testing.T) {
 		{
 			name: "Get not found",
 			want: result{
-				statusCode: http.StatusOK,
-				body:       "{\"id\":\"cpuz\",\"type\":\"gauge\",\"value\":0}",
+				statusCode: http.StatusNotFound,
+				body:       "{\"message\":\"not found metrics\"}",
 			},
-			body: payload.Metrics{
+			body: repository.Metric{
 				ID:    "cpuz",
 				MType: types.GaugeType,
 			},

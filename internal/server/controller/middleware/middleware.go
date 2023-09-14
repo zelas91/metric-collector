@@ -2,8 +2,12 @@ package middleware
 
 import (
 	"compress/gzip"
+	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/payload"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -56,8 +60,10 @@ type gzipWriter struct {
 }
 
 func (gw *gzipWriter) Write(data []byte) (int, error) {
-
 	return gw.writer.Write(data)
+}
+func (gw *gzipWriter) WriteString(data string) (int, error) {
+	return gw.writer.Write([]byte(data))
 }
 
 func getGzipWriter() *gzip.Writer {
@@ -66,12 +72,13 @@ func getGzipWriter() *gzip.Writer {
 	}
 	writer, err := gzip.NewWriterLevel(nil, gzip.BestCompression)
 	if err != nil {
-		log.Info("Failed to create gzip writer:", err)
+		log.Errorf("Failed to create gzip writer err: %v", err)
 		return nil
 	}
 
 	return writer
 }
+
 func releaseGzipWriter(writer *gzip.Writer) {
 	defer func(w *gzip.Writer) {
 		if err := writer.Close(); err != nil {
@@ -88,4 +95,30 @@ func GzipDecompress(c *gin.Context) {
 		c.Request.Header.Del("Content-Length")
 	}
 	c.Next()
+}
+
+func Timeout(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1*time.Second)
+	defer cancel()
+
+	c.Request = c.Request.WithContext(ctx)
+
+	ch := make(chan struct{})
+	go func() {
+		c.Next()
+		close(ch)
+	}()
+
+	select {
+	case <-ch:
+		return
+	case <-ctx.Done():
+		err := ctx.Err()
+		if errors.Is(err, context.DeadlineExceeded) {
+			payload.NewErrorResponse(c, http.StatusGatewayTimeout, err.Error())
+			return
+		}
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 }

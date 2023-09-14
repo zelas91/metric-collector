@@ -7,7 +7,22 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/config"
 )
 
-var log = logger.New()
+var (
+	log           = logger.New()
+	addr          *string
+	storeInterval *int
+	restore       *bool
+	filePath      *string
+	database      *string
+)
+
+func init() {
+	addr = flag.String("a", "localhost:8080", "endpoint start server")
+	storeInterval = flag.Int("i", 300, "store interval")
+	restore = flag.Bool("r", true, "load file metrics")
+	filePath = flag.String("f", "/tmp/metrics-db.json", "file path ")
+	database = flag.String("d", "", "Database URL")
+}
 
 func NewConfig() *config.Config {
 	var cfg config.Config
@@ -17,22 +32,22 @@ func NewConfig() *config.Config {
 	}
 
 	if cfg.Addr == nil {
-		cfg.Addr = new(string)
-		flag.StringVar(cfg.Addr, "a", "localhost:8080", "endpoint start server")
+		cfg.Addr = addr
 	}
 	if cfg.StoreInterval == nil {
-		cfg.StoreInterval = new(int)
-		flag.IntVar(cfg.StoreInterval, "i", 300, "store interval")
+		cfg.StoreInterval = storeInterval
+
 	}
 
 	if cfg.Restore == nil {
-		cfg.Restore = new(bool)
-		flag.BoolVar(cfg.Restore, "r", true, "load file metrics")
+		cfg.Restore = restore
 	}
 	if cfg.FilePath == nil {
-		cfg.FilePath = new(string)
-		flag.StringVar(cfg.FilePath, "f", "/tmp/metrics-db.json", "file path ")
+		cfg.FilePath = filePath
 
+	}
+	if cfg.Database == nil {
+		cfg.Database = database
 	}
 	flag.Parse()
 	return &cfg

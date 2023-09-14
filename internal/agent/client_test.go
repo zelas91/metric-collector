@@ -14,14 +14,14 @@ import (
 func TestUpdateMetrics(t *testing.T) {
 	t.Run("test update metric #1", func(t *testing.T) {
 
-		handler := controller.NewMetricHandler(service.NewMetricsService(repository.NewMemStorage(), &config.Config{}, context.Background()))
+		handler := controller.NewMetricHandler(service.NewMemService(context.Background(), repository.NewMemStorage(), &config.Config{}))
 		server := httptest.NewServer(handler.InitRoutes())
 		defer server.Close()
 
 		client := NewClientHTTP()
 		s := NewStats()
 		s.ReadStats()
-		err := client.UpdateMetrics(s, server.URL+"/update")
+		err := client.UpdateMetrics(s, server.URL+"/updates")
 		assert.NoError(t, err)
 	})
 
