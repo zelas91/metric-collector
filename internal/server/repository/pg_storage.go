@@ -56,27 +56,17 @@ func (d *DBStorage) Shutdown() error {
 }
 
 func (d *DBStorage) AddMetric(ctx context.Context, metric Metric) *Metric {
-	isMetric, err := d.isMetricExists(ctx, metric.ID)
+
+	_, err := d.db.ExecContext(ctx, `insert into metrics (name , type , value, delta)
+											SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4
+							 				on conflict (name) do update  set name=excluded.name, type=excluded.type, 
+							     				value=excluded.value, delta=metrics.delta +excluded.delta`,
+		metric.ID, metric.Value, metric.Delta, metric.MType)
 	if err != nil {
 		log.Errorf("add metric err: %v", err)
 		return nil
 	}
 
-	if isMetric {
-		_, err = d.db.ExecContext(ctx, "update metrics set value=$1, delta=delta+$2 where name=$3",
-			metric.Value, metric.Delta, metric.ID)
-		if err != nil {
-			log.Errorf("update metric err: %v", err)
-			return nil
-		}
-	} else {
-		_, err = d.db.ExecContext(ctx, "INSERT INTO metrics (name, type, value, delta) SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4",
-			metric.ID, metric.Value, metric.Delta, metric.MType)
-		if err != nil {
-			log.Errorf("add metric err: %v", err)
-			return nil
-		}
-	}
 	return &metric
 }
 
@@ -121,14 +111,6 @@ func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
 func (d *DBStorage) Ping() error {
 	return d.db.Ping()
 }
-func (d *DBStorage) isMetricExists(ctx context.Context, name string) (bool, error) {
-	var isMetric bool
-	if err := d.db.QueryRowContext(ctx, "select exists (select 1 from metrics where name=$1)", name).
-		Scan(&isMetric); err != nil {
-		return false, fmt.Errorf("is metric err :%w", err)
-	}
-	return isMetric, nil
-}
 
 func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 
@@ -137,19 +119,12 @@ func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 		return fmt.Errorf("new transactional err: %w ", err)
 	}
 
-	add, err := tx.PrepareContext(ctx, "INSERT INTO metrics (name, type, value, delta) SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4")
+	addAndUpdate, err := tx.PrepareContext(ctx, `insert into metrics (name , type , value, delta)
+											SELECT $1, id, $2 , $3 FROM metric_type WHERE name =$4
+											on conflict (name) do update  set name=excluded.name, type=excluded.type,
+												value=excluded.value, delta=metrics.delta +excluded.delta`)
 	if err != nil {
 		return fmt.Errorf("add metrics, add prepare err: %w", err)
-	}
-
-	update, err := tx.PrepareContext(ctx, "update metrics set value=$1, delta=delta+$2 where name=$3")
-	if err != nil {
-		return fmt.Errorf("add metrics, update prepare err: %w", err)
-	}
-
-	existsMetric, err := tx.PrepareContext(ctx, "select exists (select 1 from metrics where name=$1)")
-	if err != nil {
-		return fmt.Errorf("add metrics, exists prepare err: %w", err)
 	}
 
 	defer func() {
@@ -159,21 +134,9 @@ func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 		}
 	}()
 
-	var isMetrics bool
-
 	for _, metric := range metrics {
-		if err = existsMetric.QueryRowContext(ctx, metric.ID).Scan(&isMetrics); err != nil {
-			return fmt.Errorf("query exists err: %w", err)
-		}
-
-		if isMetrics {
-			if _, err = update.ExecContext(ctx, metric.Value, metric.Delta, metric.ID); err != nil {
-				return fmt.Errorf("query update err: %w", err)
-			}
-		} else {
-			if _, err = add.ExecContext(ctx, metric.ID, metric.Value, metric.Delta, metric.MType); err != nil {
-				return fmt.Errorf("query update err: %w", err)
-			}
+		if _, err = addAndUpdate.ExecContext(ctx, metric.ID, metric.Value, metric.Delta, metric.MType); err != nil {
+			return fmt.Errorf("query update err: %w", err)
 		}
 	}
 	return tx.Commit()
