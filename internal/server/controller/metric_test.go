@@ -48,7 +48,7 @@ func TestAddMetric(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			w := httptest.NewRecorder()
-			h := test.handler.InitRoutes()
+			h := test.handler.InitRoutes(nil)
 
 			h.ServeHTTP(w, request)
 			res := w.Result()
@@ -94,7 +94,7 @@ func TestGetMetric(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
 
-			h := handler.InitRoutes()
+			h := handler.InitRoutes(nil)
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()
@@ -167,7 +167,7 @@ func TestAddMetricJSON(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, strings.NewReader(string(body)))
 			request.Header = test.header
 			w := httptest.NewRecorder()
-			h := test.handler.InitRoutes()
+			h := test.handler.InitRoutes(nil)
 
 			h.ServeHTTP(w, request)
 			res := w.Result()
@@ -240,7 +240,7 @@ func TestGetMetricJSON(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, strings.NewReader(string(body)))
 			request.Header = test.header
 			w := httptest.NewRecorder()
-			h := handler.InitRoutes()
+			h := handler.InitRoutes(nil)
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()

@@ -1,12 +1,17 @@
 package middleware
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -35,6 +40,59 @@ func WithLogging(c *gin.Context) {
 		"size", c.Writer.Size(),
 		"Content-Type", c.GetHeader("Content-Type"),
 	)
+}
+
+func HashCheck(key *string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		if len(c.GetHeader("HashSHA256")) <= 0 {
+			c.Next()
+			return
+		}
+		if key == nil || len(*key) <= 0 {
+			c.Next()
+			return
+		}
+		hashKey, err := base64.StdEncoding.DecodeString(*key)
+		if err != nil {
+			log.Errorf("hash check decode key err:%v", err)
+			payload.NewErrorResponseJSON(c, http.StatusInternalServerError, "hash check decode err")
+			return
+		}
+		h := hmac.New(sha256.New, hashKey)
+
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			log.Errorf("hash check read body err:%v", err)
+			payload.NewErrorResponseJSON(c, http.StatusInternalServerError, "hash check read body")
+			return
+		}
+		defer func() {
+			if err := c.Request.Body.Close(); err != nil {
+				log.Errorf("new check body close err: %v", err)
+			}
+		}()
+
+		if _, err = h.Write(body); err != nil {
+			log.Errorf("hash check generate hash err:%v", err)
+			payload.NewErrorResponseJSON(c, http.StatusInternalServerError, "hash check generate hash err")
+			return
+		}
+
+		hash, err := base64.StdEncoding.DecodeString(c.GetHeader("HashSHA256"))
+		if err != nil {
+			log.Errorf("hash check decode header hashSHA256 err:%v", err)
+			payload.NewErrorResponseJSON(c, http.StatusInternalServerError, "hash check decode header hashSHA256 err")
+			return
+		}
+
+		if !hmac.Equal(hash, h.Sum(nil)) {
+			payload.NewErrorResponse(c, http.StatusBadRequest, "not equal hash")
+			return
+		}
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+		c.Next()
+	}
 }
 
 func GzipCompress(c *gin.Context) {
@@ -88,9 +146,20 @@ func releaseGzipWriter(writer *gzip.Writer) {
 	}(writer)
 	gzipWritePool.Put(writer)
 }
+
 func GzipDecompress(c *gin.Context) {
 	if c.Request.Header.Get("Content-Encoding") == "gzip" {
-		c.Request.Body, _ = gzip.NewReader(c.Request.Body)
+		body, err := gzip.NewReader(c.Request.Body)
+		if err != nil {
+			log.Errorf("gzip decompress new reader err: %v", err)
+		}
+		defer func() {
+			if err := body.Close(); err != nil {
+				log.Errorf("GZIP DECOMPRESS BODY CLOSE ERR:%v", err)
+			}
+		}()
+
+		c.Request.Body = body
 		c.Request.Header.Del("Content-Encoding")
 		c.Request.Header.Del("Content-Length")
 	}

@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,10 +57,10 @@ func createCounters(s *Stats) []repository.Metric {
 	return metrics
 }
 
-type effectorUpdateMetrics func(s *Stats, baseURL string) error
+type effectorUpdateMetrics func(s *Stats, baseURL, key string) error
 
 func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) effectorUpdateMetrics {
-	return func(s *Stats, baseURL string) error {
+	return func(s *Stats, baseURL, key string) error {
 		retries := 3
 		for r := 1; ; r++ {
 			delay := time.Duration(r) * time.Second
@@ -66,30 +69,41 @@ func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) e
 			case <-exit:
 				return errors.New("retry deadline exceeded")
 			}
-			if err := effector(s, baseURL); err == nil || r >= retries {
+			if err := effector(s, baseURL, key); err == nil || r >= retries {
 				return err
 			}
 		}
 	}
 }
-func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
+func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 
 	gauges := createGauges(s)
 	counters := createCounters(s)
-
 	metrics := append(gauges, counters...)
+
+	headers := make(map[string]string)
 
 	body, err := json.Marshal(metrics)
 	if err != nil {
 		return fmt.Errorf("update metrics marshal err :%w", err)
 	}
+	hash, err := generateHash(body, key)
+	if err != nil {
+		return fmt.Errorf("update metrics genetate hash err:%w", err)
+	}
+	if hash != nil {
+		headers["HashSHA256"] = *hash
+	}
 	gzipBody, err := gzipCompress(body)
 	if err != nil {
 		return fmt.Errorf("error compress body %w", err)
 	}
+
+	headers["Content-Type"] = "application/json"
+	headers["Content-Encoding"] = "gzip"
+
 	resp, err := c.Client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
+		SetHeaders(headers).
 		SetBody(gzipBody).
 		Post(baseURL)
 
@@ -100,6 +114,24 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL string) error {
 		return errors.New("answer result is not correct")
 	}
 	return nil
+}
+
+func generateHash(body []byte, key string) (*string, error) {
+	if key == "" {
+		return nil, nil
+	}
+	k, err := base64.StdEncoding.DecodeString(key)
+
+	if err != nil {
+		return nil, fmt.Errorf("generate hash decode key err:%v", err)
+	}
+	h := hmac.New(sha256.New, k)
+	_, err = h.Write(body)
+	if err != nil {
+		return nil, fmt.Errorf("generate hash err:%w", err)
+	}
+	hash := base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return &hash, nil
 }
 
 func gzipCompress(data []byte) ([]byte, error) {
@@ -119,7 +151,7 @@ func gzipCompress(data []byte) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string) {
 	go func(ctx context.Context) {
 		s := NewStats()
 		c := NewClientHTTP()
@@ -132,10 +164,10 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL string) 
 		for {
 			select {
 			case <-tickerReport.C:
-				if err := c.UpdateMetrics(s, baseURL); err != nil {
+				if err := c.UpdateMetrics(s, baseURL, key); err != nil {
 					log.Errorf("update metrics err: %v", err)
 					r := retryUpdateMetrics(c.UpdateMetrics, tickerReport.C)
-					if err = r(s, baseURL); err != nil {
+					if err = r(s, baseURL, key); err != nil {
 						log.Errorf("retry err: %v", err)
 					}
 				}
