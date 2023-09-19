@@ -17,7 +17,10 @@ import (
 	"time"
 )
 
-var log = logger.New()
+var (
+	log           = logger.New()
+	ErrInvalidKey = errors.New("invalid key")
+)
 
 type ClientHTTP struct {
 	Client *resty.Client
@@ -88,8 +91,11 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 		return fmt.Errorf("update metrics marshal err :%w", err)
 	}
 	hash, err := generateHash(body, key)
-	if err != nil {
+
+	if err != nil && !errors.Is(err, ErrInvalidKey) {
 		return fmt.Errorf("update metrics genetate hash err:%w", err)
+	} else if errors.Is(err, ErrInvalidKey) {
+		log.Errorf("Invalid hash key")
 	}
 	if hash != nil {
 		headers["HashSHA256"] = *hash
@@ -123,7 +129,7 @@ func generateHash(body []byte, key string) (*string, error) {
 	k, err := base64.StdEncoding.DecodeString(key)
 
 	if err != nil {
-		return nil, fmt.Errorf("generate hash decode key err:%v", err)
+		return nil, fmt.Errorf("generate hash decode key err:%w", ErrInvalidKey)
 	}
 	h := hmac.New(sha256.New, k)
 	_, err = h.Write(body)
