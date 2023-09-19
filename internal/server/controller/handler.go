@@ -8,7 +8,8 @@ import (
 func (h *MetricHandler) InitRoutes(hashKey *string) *gin.Engine {
 	router := gin.New()
 
-	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout, middleware.HashCheck(hashKey))
+	router.Use(middleware.HashCheck(hashKey), middleware.WithLogging,
+		middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout)
 	router.GET("/", h.GetMetrics)
 	router.GET("/ping", h.Ping)
 	router.POST("/updates", h.AddMetrics)

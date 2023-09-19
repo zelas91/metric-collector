@@ -90,21 +90,24 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 	if err != nil {
 		return fmt.Errorf("update metrics marshal err :%w", err)
 	}
-	hash, err := generateHash(body, key)
 
-	if err != nil && !errors.Is(err, ErrInvalidKey) {
-		return fmt.Errorf("update metrics genetate hash err:%w", err)
-	} else if errors.Is(err, ErrInvalidKey) {
-		log.Errorf("Invalid hash key")
-	}
-	if hash != nil {
-		headers["HashSHA256"] = *hash
-	}
 	gzipBody, err := gzipCompress(body)
 	if err != nil {
 		return fmt.Errorf("error compress body %w", err)
 	}
 
+	hash, err := generateHash(gzipBody, key)
+
+	if err != nil {
+		if !errors.Is(err, ErrInvalidKey) {
+			return fmt.Errorf("update metrics genetate hash err:%w", err)
+		}
+		log.Errorf("Invalid hash key")
+	}
+
+	if hash != nil {
+		headers["HashSHA256"] = *hash
+	}
 	headers["Content-Type"] = "application/json"
 	headers["Content-Encoding"] = "gzip"
 
