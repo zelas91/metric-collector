@@ -53,20 +53,27 @@ type calculateWriterHash struct {
 	key  string
 }
 
-// Write implementation
-func (cw *calculateWriterHash) Write(b []byte) (int, error) {
-	cw.body = append(cw.body, b...)
+func generateHash(cw *calculateWriterHash) error {
 	hash, err := utils.GenerateHash(cw.body, cw.key)
 
 	if err != nil {
 		if !errors.Is(err, utils.ErrInvalidKey) {
-			return -1, fmt.Errorf("calculate hash genetate hash err:%w", err)
+			return fmt.Errorf("calculate hash genetate hash err:%w", err)
 		}
 		log.Errorf("Invalid hash key")
 	}
 
 	if hash != nil {
 		cw.Header().Set("HashSHA256", *hash)
+	}
+	return nil
+}
+
+// Write implementation
+func (cw *calculateWriterHash) Write(b []byte) (int, error) {
+	cw.body = append(cw.body, b...)
+	if err := generateHash(cw); err != nil {
+		return -1, err
 	}
 	return cw.ResponseWriter.Write(b)
 }
@@ -74,17 +81,9 @@ func (cw *calculateWriterHash) Write(b []byte) (int, error) {
 // WriteString implementation
 func (cw *calculateWriterHash) WriteString(b string) (int, error) {
 	cw.body = append(cw.body, b...)
-	hash, err := utils.GenerateHash(cw.body, cw.key)
 
-	if err != nil {
-		if !errors.Is(err, utils.ErrInvalidKey) {
-			return -1, fmt.Errorf("calculate hash genetate hash err:%w", err)
-		}
-		log.Errorf("Invalid hash key")
-	}
-
-	if hash != nil {
-		cw.Header().Set("HashSHA256", *hash)
+	if err := generateHash(cw); err != nil {
+		return -1, err
 	}
 	return cw.ResponseWriter.WriteString(b)
 }
