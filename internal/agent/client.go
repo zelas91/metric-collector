@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,12 +11,12 @@ import (
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
+	"github.com/zelas91/metric-collector/internal/utils"
 	"time"
 )
 
 var (
-	log           = logger.New()
-	ErrInvalidKey = errors.New("invalid key")
+	log = logger.New()
 )
 
 type ClientHTTP struct {
@@ -96,10 +93,10 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 		return fmt.Errorf("error compress body %w", err)
 	}
 
-	hash, err := generateHash(gzipBody, key)
+	hash, err := utils.GenerateHash(gzipBody, key)
 
 	if err != nil {
-		if !errors.Is(err, ErrInvalidKey) {
+		if !errors.Is(err, utils.ErrInvalidKey) {
 			return fmt.Errorf("update metrics genetate hash err:%w", err)
 		}
 		log.Errorf("Invalid hash key")
@@ -123,24 +120,6 @@ func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 		return errors.New("answer result is not correct")
 	}
 	return nil
-}
-
-func generateHash(body []byte, key string) (*string, error) {
-	if key == "" {
-		return nil, nil
-	}
-	k, err := base64.StdEncoding.DecodeString(key)
-
-	if err != nil {
-		return nil, fmt.Errorf("generate hash decode key err:%w", ErrInvalidKey)
-	}
-	h := hmac.New(sha256.New, k)
-	_, err = h.Write(body)
-	if err != nil {
-		return nil, fmt.Errorf("generate hash err:%w", err)
-	}
-	hash := base64.StdEncoding.EncodeToString(h.Sum(nil))
-	return &hash, nil
 }
 
 func gzipCompress(data []byte) ([]byte, error) {

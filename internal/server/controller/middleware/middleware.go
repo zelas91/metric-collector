@@ -8,9 +8,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
+	"github.com/zelas91/metric-collector/internal/utils"
 	"io"
 	"net/http"
 	"strings"
@@ -18,12 +20,15 @@ import (
 	"time"
 )
 
-var log = logger.New()
-var gzipWritePool = &sync.Pool{
-	New: func() interface{} {
-		return gzip.NewWriter(nil)
-	},
-}
+var (
+	log = logger.New()
+
+	gzipWritePool = &sync.Pool{
+		New: func() interface{} {
+			return gzip.NewWriter(nil)
+		},
+	}
+)
 
 func WithLogging(c *gin.Context) {
 	start := time.Now()
@@ -40,6 +45,62 @@ func WithLogging(c *gin.Context) {
 		"size", c.Writer.Size(),
 		"Content-Type", c.GetHeader("Content-Type"),
 	)
+}
+
+type calculateWriterHash struct {
+	gin.ResponseWriter
+	body []byte
+	key  string
+}
+
+// Write implementation
+func (cw *calculateWriterHash) Write(b []byte) (int, error) {
+	cw.body = append(cw.body, b...)
+	hash, err := utils.GenerateHash(cw.body, cw.key)
+
+	if err != nil {
+		if !errors.Is(err, utils.ErrInvalidKey) {
+			return -1, fmt.Errorf("calculate hash genetate hash err:%w", err)
+		}
+		log.Errorf("Invalid hash key")
+	}
+
+	if hash != nil {
+		cw.Header().Set("HashSHA256", *hash)
+	}
+	return cw.ResponseWriter.Write(b)
+}
+
+// WriteString implementation
+func (cw *calculateWriterHash) WriteString(b string) (int, error) {
+	cw.body = append(cw.body, b...)
+	hash, err := utils.GenerateHash(cw.body, cw.key)
+
+	if err != nil {
+		if !errors.Is(err, utils.ErrInvalidKey) {
+			return -1, fmt.Errorf("calculate hash genetate hash err:%w", err)
+		}
+		log.Errorf("Invalid hash key")
+	}
+
+	if hash != nil {
+		cw.Header().Set("HashSHA256", *hash)
+	}
+	return cw.ResponseWriter.WriteString(b)
+}
+
+func CalculateHash(key *string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		if key == nil || len(*key) <= 0 {
+			c.Next()
+			return
+		}
+
+		calcWriter := &calculateWriterHash{ResponseWriter: c.Writer, key: *key}
+		c.Writer = calcWriter
+		c.Next()
+	}
 }
 
 func HashCheck(key *string) gin.HandlerFunc {

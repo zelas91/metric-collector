@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
@@ -9,6 +10,7 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"html/template"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -84,7 +86,7 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 
 func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
-	body, err := template.New("test").Parse(templateHTML)
+	body, err := template.New("values").Parse(templateHTML)
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -99,7 +101,15 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 			mapMetrics[metric.ID] = *metric.Delta
 		}
 	}
-	if err = body.Execute(c.Writer, mapMetrics); err != nil {
+	buffer := &bytes.Buffer{}
+
+	if err = body.Execute(buffer, mapMetrics); err != nil {
+		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = io.Copy(c.Writer, buffer)
+
+	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
