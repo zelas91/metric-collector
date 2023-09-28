@@ -15,20 +15,18 @@ import (
 
 type calculateWriterHash struct {
 	gin.ResponseWriter
-	body []byte
+	body *bytes.Buffer
 	key  string
 }
 
 // Write implementation
 func (cw *calculateWriterHash) Write(b []byte) (int, error) {
-	cw.body = append(cw.body, b...)
-	return len(cw.body), nil
+	return cw.body.Write(b)
 }
 
 // WriteString implementation
 func (cw *calculateWriterHash) WriteString(b string) (int, error) {
-	cw.body = append(cw.body, b...)
-	return len(cw.body), nil
+	return cw.body.WriteString(b)
 }
 
 func CalculateHash(key *string) gin.HandlerFunc {
@@ -39,11 +37,11 @@ func CalculateHash(key *string) gin.HandlerFunc {
 			return
 		}
 
-		calcWriter := &calculateWriterHash{ResponseWriter: c.Writer, key: *key}
+		calcWriter := &calculateWriterHash{ResponseWriter: c.Writer, key: *key, body: &bytes.Buffer{}}
 		c.Writer = calcWriter
 		c.Next()
 
-		hash, err := utils.GenerateHash(calcWriter.body, calcWriter.key)
+		hash, err := utils.GenerateHash(calcWriter.body.Bytes(), calcWriter.key)
 		if err != nil {
 			if !errors.Is(err, utils.ErrInvalidKey) {
 				log.Errorf("calculate hash genetate hash err:%v", err)
@@ -57,7 +55,7 @@ func CalculateHash(key *string) gin.HandlerFunc {
 			c.Header("HashSHA256", *hash)
 		}
 
-		if _, err = calcWriter.ResponseWriter.Write(calcWriter.body); err != nil {
+		if _, err = calcWriter.ResponseWriter.Write(calcWriter.body.Bytes()); err != nil {
 			log.Errorf("calculate hash genetate hash err:%v", err)
 			payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 			return
