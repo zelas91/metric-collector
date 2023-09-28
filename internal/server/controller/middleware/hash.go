@@ -41,7 +41,7 @@ func CalculateHash(key *string) gin.HandlerFunc {
 		c.Writer = calcWriter
 		c.Next()
 		/*
-			так как после первого вызова Write, Written() будет равен true после чего не возможно выставить Заголовок,
+			так как после первого вызова ResponseWriter.Write, Written() будет равен true после чего не возможно выставить Заголовок,
 			поэтому запись данных из calculateWriterHash.body выполняем уже после вызова next
 		*/
 		hash, err := utils.GenerateHash(calcWriter.body.Bytes(), calcWriter.key)
