@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/utils"
@@ -20,39 +19,16 @@ type calculateWriterHash struct {
 	key  string
 }
 
-func generateHash(cw *calculateWriterHash) error {
-	hash, err := utils.GenerateHash(cw.body, cw.key)
-
-	if err != nil {
-		if !errors.Is(err, utils.ErrInvalidKey) {
-			return fmt.Errorf("calculate hash genetate hash err:%w", err)
-		}
-		log.Errorf("Invalid hash key")
-	}
-
-	if hash != nil {
-		cw.Header().Set("HashSHA256", *hash)
-	}
-	return nil
-}
-
 // Write implementation
 func (cw *calculateWriterHash) Write(b []byte) (int, error) {
 	cw.body = append(cw.body, b...)
-	if err := generateHash(cw); err != nil {
-		return -1, err
-	}
-	return cw.ResponseWriter.Write(b)
+	return len(cw.body), nil
 }
 
 // WriteString implementation
 func (cw *calculateWriterHash) WriteString(b string) (int, error) {
 	cw.body = append(cw.body, b...)
-
-	if err := generateHash(cw); err != nil {
-		return -1, err
-	}
-	return cw.ResponseWriter.WriteString(b)
+	return len(cw.body), nil
 }
 
 func CalculateHash(key *string) gin.HandlerFunc {
@@ -66,6 +42,26 @@ func CalculateHash(key *string) gin.HandlerFunc {
 		calcWriter := &calculateWriterHash{ResponseWriter: c.Writer, key: *key}
 		c.Writer = calcWriter
 		c.Next()
+
+		hash, err := utils.GenerateHash(calcWriter.body, calcWriter.key)
+		if err != nil {
+			if !errors.Is(err, utils.ErrInvalidKey) {
+				log.Errorf("calculate hash genetate hash err:%v", err)
+				payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			log.Errorf("Invalid hash key")
+		}
+
+		if hash != nil {
+			c.Header("HashSHA256", *hash)
+		}
+
+		if _, err = calcWriter.ResponseWriter.Write(calcWriter.body); err != nil {
+			log.Errorf("calculate hash genetate hash err:%v", err)
+			payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 }
 
