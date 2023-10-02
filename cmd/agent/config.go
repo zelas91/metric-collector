@@ -12,8 +12,8 @@ var (
 	pollInterval   *int
 	reportInterval *int
 	key            *string
-
-	log = logger.New()
+	rateLimit      *int
+	log            = logger.New()
 )
 
 func init() {
@@ -21,6 +21,7 @@ func init() {
 	pollInterval = flag.Int("p", 2, " poll interval ")
 	reportInterval = flag.Int("r", 10, " poll interval ")
 	key = flag.String("k", "", "key hash")
+	rateLimit = flag.Int("l", 0, "rate_limit")
 }
 
 type Config struct {
@@ -28,6 +29,7 @@ type Config struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
+	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
 func NewConfig() *Config {
