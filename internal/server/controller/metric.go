@@ -177,4 +177,5 @@ func (h *MetricHandler) AddMetrics(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 }

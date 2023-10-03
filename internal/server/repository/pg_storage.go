@@ -9,6 +9,11 @@ import (
 	"github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/lib/pq"
+	"sync"
+)
+
+var (
+	lock = new(sync.Mutex)
 )
 
 type DBStorage struct {
@@ -113,7 +118,8 @@ func (d *DBStorage) Ping() error {
 }
 
 func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
-
+	lock.Lock()
+	defer lock.Unlock()
 	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("new transactional err: %w ", err)
@@ -124,6 +130,7 @@ func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 											on conflict (name) do update  set name=excluded.name, type=excluded.type,
 												value=excluded.value, delta=metrics.delta +excluded.delta`)
 	if err != nil {
+
 		return fmt.Errorf("add metrics, add prepare err: %w", err)
 	}
 
@@ -139,5 +146,6 @@ func (d *DBStorage) AddMetrics(ctx context.Context, metrics []Metric) error {
 			return fmt.Errorf("query update err: %w", err)
 		}
 	}
+
 	return tx.Commit()
 }
