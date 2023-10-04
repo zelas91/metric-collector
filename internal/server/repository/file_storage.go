@@ -126,7 +126,6 @@ func (f *FileStorage) getMetricsFile() *MemStorage {
 		return nil
 	}
 	var metrics []Metric
-
 	if err := json.Unmarshal(data, &metrics); err != nil {
 		log.Errorf("read metrics db err: %v", err)
 		return nil

@@ -21,7 +21,7 @@ func init() {
 	pollInterval = flag.Int("p", 2, " poll interval ")
 	reportInterval = flag.Int("r", 10, " poll interval ")
 	key = flag.String("k", "", "key hash")
-	rateLimit = flag.Int("l", 0, "rate_limit")
+	rateLimit = flag.Int("l", 1, "rate_limit")
 }
 
 type Config struct {
@@ -29,7 +29,7 @@ type Config struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
-	RateLimit      int    `env:"RATE_LIMIT"`
+	RateLimit      *int   `env:"RATE_LIMIT"`
 }
 
 func NewConfig() *Config {
@@ -51,6 +51,9 @@ func NewConfig() *Config {
 	}
 	if cfg.Key == "" {
 		cfg.Key = *key
+	}
+	if cfg.RateLimit == nil {
+		cfg.RateLimit = rateLimit
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
