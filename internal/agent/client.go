@@ -57,7 +57,7 @@ func createCounters(s *Stats) []repository.Metric {
 	return metrics
 }
 
-func createMemoryAndCpu(s *Stats) []repository.Metric {
+func createMemoryAndCPU(s *Stats) []repository.Metric {
 	memory := s.GetMemoryAndCPU()
 	metrics := make([]repository.Metric, 0, len(memory))
 	for name, value := range memory {
@@ -163,7 +163,7 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
 	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
-	tickerPollCpuAndMemory := time.NewTicker(1 * time.Second)
+	tickerPollCPUAndMemory := time.NewTicker(1 * time.Second)
 
 	reportChan := make(chan []repository.Metric, 64)
 	updChan := make(chan []repository.Metric, 64)
@@ -197,8 +197,8 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 	go func() {
 		for {
 			select {
-			case <-tickerPollCpuAndMemory.C:
-				reportChan <- createMemoryAndCpu(s)
+			case <-tickerPollCPUAndMemory.C:
+				reportChan <- createMemoryAndCPU(s)
 			case <-ctx.Done():
 				return
 			}
@@ -281,66 +281,3 @@ func requestPost(client *resty.Client, header map[string]string, body []byte, ur
 	}
 	return nil
 }
-
-//func Run2(ctx context.Context, pollInterval, reportInterval int, baseURL, key string) {
-//	s := NewStats()
-//	c := NewClientHTTP()
-//
-//	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
-//	//defer tickerReport.Stop()
-//	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
-//	//defer tickerPoll.Stop()
-//
-//	for w := 0; w < 5; w++ {
-//		w := w
-//		go func(ctx context.Context, tickerReport <-chan time.Time) {
-//			log.Info(w)
-//			for {
-//				select {
-//				case <-tickerReport:
-//					log.Info("ticket")
-//					if err := c.UpdateMetrics(s, baseURL, key); err != nil {
-//						log.Errorf("update metrics err: %v", err)
-//						r := retryUpdateMetrics(c.UpdateMetrics, tickerReport)
-//						if err = r(s, baseURL, key); err != nil {
-//							log.Errorf("retry err: %v", err)
-//						}
-//					}
-//
-//				case <-ctx.Done():
-//					return
-//
-//				}
-//			}
-//		}(ctx, tickerReport.C)
-//	}
-//
-//	go func(ctx context.Context, tickerPoll <-chan time.Time) {
-//		for {
-//			select {
-//			case <-tickerPoll:
-//				s.ReadStats()
-//			case <-ctx.Done():
-//				return
-//
-//			}
-//		}
-//	}(ctx, tickerPoll.C)
-//for {
-//	select {
-//	case <-tickerReport.C:
-//		if err := c.UpdateMetrics(s, baseURL, key); err != nil {
-//			log.Errorf("update metrics err: %v", err)
-//			r := retryUpdateMetrics(c.UpdateMetrics, tickerReport.C)
-//			if err = r(s, baseURL, key); err != nil {
-//				log.Errorf("retry err: %v", err)
-//			}
-//		}
-//
-//	case <-tickerPoll.C:
-//		s.ReadStats()
-//	case <-ctx.Done():
-//		return
-//	}
-//}
-//}
