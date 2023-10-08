@@ -176,7 +176,7 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 		for {
 			select {
 			case <-tickerReport.C:
-				copyChannel(reportChan, updChan)
+				copyChannel(ctx, reportChan, updChan)
 			case <-ctx.Done():
 				return
 			}
@@ -200,26 +200,28 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 			case <-tickerPollCPUAndMemory.C:
 				reportChan <- createMemoryAndCPU(s)
 			case <-ctx.Done():
+				close(reportChan)
 				return
 			}
 		}
 	}()
 
-	go func() {
-		if <-ctx.Done(); true {
-			close(updChan)
-			close(reportChan)
-		}
-	}()
 }
-func copyChannel(src <-chan []repository.Metric, dst chan<- []repository.Metric) {
+
+func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<- []repository.Metric) {
 	for {
 		select {
-		case value := <-src:
+		case value, ok := <-src:
+			if !ok {
+				return
+			}
 			dst <- value
+		case <-ctx.Done():
+			close(dst)
 		default:
 			return
 		}
+
 	}
 }
 
