@@ -84,7 +84,7 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 
 func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
-	body, err := template.New("test").Parse(templateHTML)
+	body, err := template.New("values").Parse(templateHTML)
 	if err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -99,6 +99,7 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 			mapMetrics[metric.ID] = *metric.Delta
 		}
 	}
+
 	if err = body.Execute(c.Writer, mapMetrics); err != nil {
 		payload.NewErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
@@ -176,4 +177,5 @@ func (h *MetricHandler) AddMetrics(c *gin.Context) {
 		payload.NewErrorResponseJSON(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 }

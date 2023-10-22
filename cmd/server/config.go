@@ -14,6 +14,7 @@ var (
 	restore       *bool
 	filePath      *string
 	database      *string
+	key           *string
 )
 
 func init() {
@@ -22,6 +23,7 @@ func init() {
 	restore = flag.Bool("r", true, "load file metrics")
 	filePath = flag.String("f", "/tmp/metrics-db.json", "file path ")
 	database = flag.String("d", "", "Database URL")
+	key = flag.String("k", "", "key hash")
 }
 
 func NewConfig() *config.Config {
@@ -48,6 +50,9 @@ func NewConfig() *config.Config {
 	}
 	if cfg.Database == nil {
 		cfg.Database = database
+	}
+	if cfg.Key == nil {
+		cfg.Key = key
 	}
 	flag.Parse()
 	return &cfg

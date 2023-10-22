@@ -1,6 +1,9 @@
 package agent
 
 import (
+	"fmt"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"math/rand"
 	"runtime"
 )
@@ -19,6 +22,28 @@ func (s *Stats) ReadStats() {
 	runtime.ReadMemStats(&s.MemStats)
 	s.PollCount += 1
 	s.RandomValue = rand.Int()
+}
+
+func (s *Stats) GetMemoryAndCPU() map[string]float64 {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		log.Errorf("get memory info err: %v", err)
+		return nil
+	}
+
+	percents, err := cpu.Percent(0, true)
+	if err != nil {
+		log.Errorf("get cpu info err :%v ", err)
+		return nil
+	}
+
+	result := make(map[string]float64, 2+len(percents))
+	result["TotalMemory"] = float64(v.Total)
+	result["FreeMemory"] = float64(v.Free)
+	for i, p := range percents {
+		result[fmt.Sprintf("CPUutilization%d", i)] = p
+	}
+	return result
 }
 func (s *Stats) GetGauges() map[string]float64 {
 	return map[string]float64{

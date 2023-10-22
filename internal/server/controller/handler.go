@@ -5,10 +5,11 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
 )
 
-func (h *MetricHandler) InitRoutes() *gin.Engine {
+func (h *MetricHandler) InitRoutes(hashKey *string) *gin.Engine {
 	router := gin.New()
 
-	router.Use(middleware.WithLogging, middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout)
+	router.Use(middleware.HashCheck(hashKey), middleware.WithLogging,
+		middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout, middleware.CalculateHash(hashKey))
 	router.GET("/", h.GetMetrics)
 	router.GET("/ping", h.Ping)
 	router.POST("/updates", h.AddMetrics)

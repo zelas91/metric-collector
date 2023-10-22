@@ -13,7 +13,7 @@ func main() {
 	conf := NewConfig()
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	_ = cancel
-	agent.Run(ctx, conf.PollInterval, conf.ReportInterval, conf.BaseURL)
+	agent.Run(ctx, conf.PollInterval, conf.ReportInterval, conf.BaseURL, conf.Key, *conf.RateLimit)
 	log.Info("start agent")
 	<-ctx.Done()
 	stop()
