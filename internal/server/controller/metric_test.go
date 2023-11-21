@@ -284,8 +284,8 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var buffer bytes.Buffer
-	gz := gzip.NewWriter(&buffer)
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
 	gz.Write(bodyJSON)
 	gz.Close()
 	w := httptest.NewRecorder()
@@ -298,7 +298,7 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(string(buffer.Bytes())))
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(body.String()))
 		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
 		b.StartTimer()
 		h.ServeHTTP(w, request)
@@ -332,8 +332,8 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var buffer bytes.Buffer
-	gz := gzip.NewWriter(&buffer)
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
 	gz.Write(bodyJSON)
 	gz.Close()
 	mem := repository.NewMemStorage()
@@ -344,7 +344,7 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
-		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(string(buffer.Bytes())))
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(body.String()))
 		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
 		b.StartTimer()
 		h.ServeHTTP(w, request)
