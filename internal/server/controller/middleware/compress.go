@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"compress/gzip"
-	"github.com/gin-gonic/gin"
 	"strings"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (

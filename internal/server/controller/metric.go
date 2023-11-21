@@ -2,15 +2,16 @@ package controller
 
 import (
 	"fmt"
+	"html/template"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"html/template"
-	"net/http"
-	"strings"
 )
 
 var log = logger.New()

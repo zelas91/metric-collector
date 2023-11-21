@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/zelas91/metric-collector/internal/logger"
 )

@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"testing"
 )
 
 var (

@@ -3,11 +3,12 @@ package repository
 import (
 	"context"
 	"encoding/json"
-	"github.com/zelas91/metric-collector/internal/logger"
-	"github.com/zelas91/metric-collector/internal/server/config"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/config"
 )
 
 var (

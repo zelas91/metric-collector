@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"strconv"
-	"strings"
 )
 
 //go:generate mockgen -package mocks -destination=./mocks/mock_service.go -source=service.go -package=mock_service Service
