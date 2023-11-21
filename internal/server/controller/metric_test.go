@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
@@ -253,4 +255,99 @@ func TestGetMetricJSON(t *testing.T) {
 			assert.Equal(t, test.want.body, result, "status code not as expected")
 		})
 	}
+}
+
+func BenchmarkAddMetricJSONFile(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var buffer bytes.Buffer
+	gz := gzip.NewWriter(&buffer)
+	gz.Write(bodyJSON)
+	gz.Close()
+	w := httptest.NewRecorder()
+	file := "/tmp/metrics-db.json"
+	interval := 0
+	h := NewMetricHandler(service.NewMemService(context.Background(),
+		repository.NewFileStorage(context.TODO(), &config.Config{FilePath: &file,
+			StoreInterval: &interval}), &config.Config{})).InitRoutes(nil)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(string(buffer.Bytes())))
+		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
+		b.StartTimer()
+		h.ServeHTTP(w, request)
+	}
+}
+
+func BenchmarkAddMetricJSON(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var buffer bytes.Buffer
+	gz := gzip.NewWriter(&buffer)
+	gz.Write(bodyJSON)
+	gz.Close()
+	mem := repository.NewMemStorage()
+	w := httptest.NewRecorder()
+	h := NewMetricHandler(service.NewMemService(context.Background(),
+		mem, &config.Config{})).InitRoutes(nil)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(string(buffer.Bytes())))
+		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
+		b.StartTimer()
+		h.ServeHTTP(w, request)
+	}
+
 }

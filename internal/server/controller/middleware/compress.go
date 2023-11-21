@@ -7,11 +7,14 @@ import (
 	"sync"
 )
 
-var gzipWritePool = &sync.Pool{
-	New: func() interface{} {
-		return gzip.NewWriter(nil)
-	},
-}
+var (
+	gzipWritePool = &sync.Pool{
+		New: func() interface{} {
+			return gzip.NewWriter(nil)
+		},
+	}
+	gzipReaderPool sync.Pool
+)
 
 type gzipWriter struct {
 	writer *gzip.Writer
@@ -63,18 +66,27 @@ func releaseGzipWriter(writer *gzip.Writer) {
 	}(writer)
 	gzipWritePool.Put(writer)
 }
+func getGzipReader() *gzip.Reader {
+	obj := gzipReaderPool.Get()
+	if obj == nil {
+		return &gzip.Reader{}
+	}
+
+	return obj.(*gzip.Reader)
+}
+
+func releaseGzipReader(reader *gzip.Reader) {
+	gzipReaderPool.Put(reader)
+}
 
 func GzipDecompress(c *gin.Context) {
 	if c.Request.Header.Get("Content-Encoding") == "gzip" {
-		body, err := gzip.NewReader(c.Request.Body)
+		body := getGzipReader()
+		defer releaseGzipReader(body)
+		err := body.Reset(c.Request.Body)
 		if err != nil {
-			log.Errorf("gzip decompress new reader err: %v", err)
+			log.Errorf("gzip decompress reset reader err: %v", err)
 		}
-		defer func() {
-			if err := body.Close(); err != nil {
-				log.Errorf("GZIP DECOMPRESS BODY CLOSE ERR:%v", err)
-			}
-		}()
 
 		c.Request.Body = body
 		c.Request.Header.Del("Content-Encoding")
