@@ -46,6 +46,7 @@ type MetricHandler struct {
 	memService service.Service
 }
 
+// NewMetricHandler - make handlers structure
 func NewMetricHandler(memService service.Service) *MetricHandler {
 	return &MetricHandler{memService: memService}
 }

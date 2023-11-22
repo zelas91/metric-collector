@@ -80,10 +80,10 @@ func (mr *MockServiceMockRecorder) AddMetrics(ctx, metrics interface{}) *gomock.
 }
 
 // GetMetric mocks base method.
-func (m *MockService) GetMetric(ctx context.Context, name string) (repository.Metric, error) {
+func (m *MockService) GetMetric(ctx context.Context, name string) (*repository.Metric, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetric", ctx, name)
-	ret0, _ := ret[0].(repository.Metric)
+	ret0, _ := ret[0].(*repository.Metric)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
