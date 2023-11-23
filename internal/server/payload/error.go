@@ -1,3 +1,4 @@
+// Package payload responses err  for the web server
 package payload
 
 import (
@@ -9,6 +10,7 @@ import (
 
 var log = logger.New()
 
+// NewErrorResponse response err in string.
 func NewErrorResponse(c *gin.Context, statusCode int, message string) {
 	if err := c.AbortWithError(statusCode, errors.New(message)); err != nil {
 		log.Errorf("Error request status code = %d , error=%v", statusCode, err)
@@ -16,6 +18,7 @@ func NewErrorResponse(c *gin.Context, statusCode int, message string) {
 
 }
 
+// NewErrorResponseJSON response err in JSON.
 func NewErrorResponseJSON(c *gin.Context, statusCode int, message string) {
 	c.AbortWithStatusJSON(statusCode, gin.H{"message": message})
 }

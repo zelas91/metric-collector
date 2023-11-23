@@ -24,6 +24,7 @@ type ClientHTTP struct {
 	client *resty.Client
 }
 
+// NewClientHTTP initialize http client
 func NewClientHTTP() *ClientHTTP {
 	client := resty.New()
 	client.SetTimeout(2 * time.Second)
@@ -90,6 +91,8 @@ func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) e
 		}
 	}
 }
+
+// UpdateMetrics send metrics to web server.
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 	gauges := createGauges(s)
 	counters := createCounters(s)
@@ -159,6 +162,7 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 	ch <- append(createCounters(s), createGauges(s)...)
 }
 
+// Run start goroutine to call the metrics update.
 func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int) {
 	s := NewStats()
 
