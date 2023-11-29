@@ -94,7 +94,7 @@ func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
 		return nil
 	}
 	defer func() {
-		if err := rows.Close(); err != nil {
+		if err = rows.Close(); err != nil {
 			log.Errorf("rows close err :%v", err)
 			return
 		}

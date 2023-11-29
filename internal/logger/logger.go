@@ -33,7 +33,7 @@ func New() *zap.SugaredLogger {
 
 		var cfg zap.Config
 
-		if err := json.Unmarshal(file, &cfg); err != nil {
+		if err = json.Unmarshal(file, &cfg); err != nil {
 			log.Fatal(err)
 		}
 		l, err := cfg.Build()
