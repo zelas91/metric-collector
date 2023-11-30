@@ -1,3 +1,4 @@
+// Package payload error handler with response capability to the client
 package payload
 
 import (

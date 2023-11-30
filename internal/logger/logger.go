@@ -1,3 +1,4 @@
+// Package logger is log zap.
 package logger
 
 import (

@@ -1,3 +1,4 @@
+// Package agent  is used to send data with metrics to the web service.
 package agent
 
 import (

@@ -1,3 +1,4 @@
+// Package server init and start web server go
 package server
 
 import (
