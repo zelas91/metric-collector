@@ -79,8 +79,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 func main() {
-
-	checks := []*analysis.Analyzer{
+	analyzers := []*analysis.Analyzer{
 		asmdecl.Analyzer,
 		assign.Analyzer,
 		atomic.Analyzer,
@@ -105,16 +104,16 @@ func main() {
 		unusedresult.Analyzer,
 	}
 
-	checks = append(checks, Analyzer)
+	analyzers = append(analyzers, Analyzer)
 	for _, v := range staticcheck.Analyzers {
-		checks = append(checks, v.Analyzer)
+		analyzers = append(analyzers, v.Analyzer)
 	}
-	checks = append(checks, simple.Analyzers[0].Analyzer)
-	checks = append(checks, stylecheck.Analyzers[0].Analyzer)
-	checks = append(checks, quickfix.Analyzers[0].Analyzer)
+	analyzers = append(analyzers, simple.Analyzers[0].Analyzer)
+	analyzers = append(analyzers, stylecheck.Analyzers[0].Analyzer)
+	analyzers = append(analyzers, quickfix.Analyzers[0].Analyzer)
 
 	multichecker.Main(
-		checks...,
+		analyzers...,
 	)
 
 }
