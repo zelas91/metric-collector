@@ -20,7 +20,6 @@ func main() {
 	stop()
 }
 func stop() {
-
 	log.Info("stop agent")
 	logger.Shutdown()
 	os.Exit(0)
