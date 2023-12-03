@@ -1,7 +1,7 @@
+// Package main staticlint checks for the use of a direct os.Exit call in the main function of the main package.
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
@@ -27,6 +27,7 @@ import (
 	"golang.org/x/tools/go/analysis/passes/unmarshal"
 	"golang.org/x/tools/go/analysis/passes/unsafeptr"
 	"golang.org/x/tools/go/analysis/passes/unusedresult"
+	"honnef.co/go/tools/analysis/lint"
 	"honnef.co/go/tools/quickfix"
 	"honnef.co/go/tools/simple"
 	"honnef.co/go/tools/staticcheck"
@@ -35,12 +36,17 @@ import (
 	"strings"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name: "staticlint",
-	Doc:  "проверяет наличие прямого вызова os.Exit в функции main пакета main",
-	Run:  run,
-}
+var (
+	analyzers []*analysis.Analyzer
+	Analyzer  = &analysis.Analyzer{
+		Name: "staticlint",
+		Doc:  "проверяет наличие прямого вызова os.Exit в функции main пакета main",
+		Run:  run,
+	}
+)
 
+// shouldIgnoreFile checks whether the absolute path to the file contains the substring "go-build".
+// If it contains, the file is ignored.
 func shouldIgnoreFile(filename string) bool {
 	absPath, err := filepath.Abs(filename)
 	if err != nil {
@@ -62,8 +68,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						if selExp, ok := call.Fun.(*ast.SelectorExpr); ok {
 							if ident, ok := selExp.X.(*ast.Ident); ok {
 								if ident.Name == "os" && selExp.Sel.Name == "Exit" {
-									fmt.Println()
-									pass.Reportf(selExp.Sel.NamePos, "нельзя использовать прямой вызов os.Exit в функции main")
+									pass.Reportf(selExp.Sel.NamePos, "os.Exit calls are prohibited in main()")
 
 								}
 
@@ -78,8 +83,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	return nil, nil
 }
-func main() {
-	analyzers := []*analysis.Analyzer{
+func init() {
+	analyzers = []*analysis.Analyzer{
 		asmdecl.Analyzer,
 		assign.Analyzer,
 		atomic.Analyzer,
@@ -108,10 +113,20 @@ func main() {
 	for _, v := range staticcheck.Analyzers {
 		analyzers = append(analyzers, v.Analyzer)
 	}
-	analyzers = append(analyzers, simple.Analyzers[0].Analyzer)
-	analyzers = append(analyzers, stylecheck.Analyzers[0].Analyzer)
-	analyzers = append(analyzers, quickfix.Analyzers[0].Analyzer)
+	analyzers = append(analyzers, findLintAnalyzer(simple.Analyzers, "S1000"))
+	analyzers = append(analyzers, findLintAnalyzer(stylecheck.Analyzers, "ST1001"))
+	analyzers = append(analyzers, findLintAnalyzer(quickfix.Analyzers, "QF1004"))
+}
 
+func findLintAnalyzer(analyzers []*lint.Analyzer, name string) *analysis.Analyzer {
+	for _, v := range analyzers {
+		if v.Analyzer.Name == name {
+			return v.Analyzer
+		}
+	}
+	return nil
+}
+func main() {
 	multichecker.Main(
 		analyzers...,
 	)
