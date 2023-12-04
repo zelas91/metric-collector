@@ -130,3 +130,65 @@ func TestGetMetric(t *testing.T) {
 
 	}
 }
+
+func TestGetMetrics(t *testing.T) {
+	val := 20.9
+	memStorage := &MemStorage{
+		mem: map[string]Metric{
+			"metric1": {ID: "metric1", Value: &val, MType: types.GaugeType},
+			"metric2": {ID: "metric2", Value: &val, MType: types.GaugeType},
+			"metric3": {ID: "metric3", Value: &val, MType: types.GaugeType},
+		},
+	}
+	expectedMetrics := []Metric{
+		{ID: "metric1", Value: &val, MType: types.GaugeType},
+		{ID: "metric2", Value: &val, MType: types.GaugeType},
+		{ID: "metric3", Value: &val, MType: types.GaugeType},
+	}
+
+	metrics := memStorage.GetMetrics(context.Background())
+
+	assert.ElementsMatch(t, expectedMetrics, metrics)
+}
+
+func TestAddMetrics(t *testing.T) {
+
+	tests := []struct {
+		name     string
+		metrics  []Metric
+		expected []Metric
+	}{
+		{
+			name: "#1 OK",
+			metrics: []Metric{
+				{
+					ID:    "CPU",
+					MType: types.GaugeType,
+					Value: &cpuValue,
+				}, {
+					ID:    "POOL",
+					MType: types.CounterType,
+					Delta: &poolValue,
+				},
+			},
+			expected: []Metric{
+				{
+					ID:    "CPU",
+					MType: types.GaugeType,
+					Value: &cpuValue,
+				}, {
+					ID:    "POOL",
+					MType: types.CounterType,
+					Delta: &poolValue,
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mem := NewMemStorage()
+			_ = mem.AddMetrics(context.Background(), test.metrics)
+			assert.ElementsMatch(t, test.expected, mem.GetMetrics(context.TODO()))
+		})
+	}
+}

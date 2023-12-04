@@ -5,6 +5,8 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/golang/mock/gomock"
+	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -351,4 +353,49 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 		h.ServeHTTP(w, request)
 	}
 
+}
+
+func TestGetMetrics(t *testing.T) {
+	val := 29.23
+	tests := []struct {
+		name         string
+		mockBehavior func(s *mock_service.MockService)
+		method       string
+		url          string
+		statusCode   int
+	}{{
+		name:       "OK",
+		statusCode: http.StatusOK,
+		mockBehavior: func(s *mock_service.MockService) {
+			s.EXPECT().GetMetrics(gomock.Any()).Return([]repository.Metric{
+				{ID: "CPUZ",
+					MType: types.GaugeType,
+					Value: &val},
+			})
+		},
+		url:    "/",
+		method: http.MethodGet,
+	}}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			serv := mock_service.NewMockService(ctrl)
+			test.mockBehavior(serv)
+			handler := NewMetricHandler(serv)
+
+			request := httptest.NewRequest(test.method, test.url, nil)
+			//request.Header = test.header
+			w := httptest.NewRecorder()
+			h := handler.InitRoutes(nil)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+			defer res.Body.Close()
+			statusCode := res.StatusCode
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err, "Body read error")
+			assert.Equal(t, test.statusCode, statusCode)
+
+		})
+	}
 }
