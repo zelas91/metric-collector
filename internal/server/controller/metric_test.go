@@ -5,7 +5,9 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
 	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
 	"io"
 	"net/http"
@@ -397,5 +399,72 @@ func TestGetMetrics(t *testing.T) {
 			assert.Equal(t, test.statusCode, statusCode)
 
 		})
+	}
+}
+func createGinContextDecompress(b *testing.B, body string) *gin.Context {
+	w := httptest.NewRecorder()
+	b.StopTimer()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest("post", "/test", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipDecompressMiddleware(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
+	gz.Write(bodyJSON)
+	gz.Close()
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipDecompress(createGinContextDecompress(b, body.String()))
+	}
+}
+func createGinContextCompress(b *testing.B) *gin.Context {
+	b.StopTimer()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipCompressMiddleware(b *testing.B) {
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipCompress(createGinContextCompress(b))
 	}
 }

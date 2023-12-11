@@ -89,7 +89,6 @@ func GzipDecompress(c *gin.Context) {
 		if err != nil {
 			log.Errorf("gzip decompress reset reader err: %v", err)
 		}
-
 		c.Request.Body = body
 		c.Request.Header.Del("Content-Encoding")
 		c.Request.Header.Del("Content-Length")
