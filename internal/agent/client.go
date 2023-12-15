@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -160,9 +161,8 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 	ch <- append(createCounters(s), createGauges(s)...)
 }
 
-func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey []byte) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey *rsa.PublicKey) {
 	s := NewStats()
-	fmt.Println(pubKey)
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
 	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
 	tickerPollCPUAndMemory := time.NewTicker(1 * time.Second)

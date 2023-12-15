@@ -37,7 +37,7 @@ type Config struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
 	RateLimit      *int   `env:"RATE_LIMIT"`
-	CryptoKey      string `env:"CRYPTO_KEY"`
+	CryptoCertPath string `env:"CRYPTO_KEY"`
 }
 
 func NewConfig() *Config {
@@ -63,8 +63,8 @@ func NewConfig() *Config {
 	if cfg.RateLimit == nil {
 		cfg.RateLimit = rateLimit
 	}
-	if cfg.CryptoKey == "" {
-		cfg.CryptoKey = *cryptoKey
+	if cfg.CryptoCertPath == "" {
+		cfg.CryptoCertPath = *cryptoKey
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
