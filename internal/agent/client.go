@@ -160,9 +160,9 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 	ch <- append(createCounters(s), createGauges(s)...)
 }
 
-func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey []byte) {
 	s := NewStats()
-
+	fmt.Println(pubKey)
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
 	tickerPoll := time.NewTicker(time.Duration(pollInterval) * time.Second)
 	tickerPollCPUAndMemory := time.NewTicker(1 * time.Second)
