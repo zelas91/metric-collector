@@ -1,26 +1,19 @@
 package controller
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
-	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
-	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 )
 
 func TestAddMetric(t *testing.T) {
@@ -476,3 +469,4 @@ func BenchmarkGzipCompressMiddleware(b *testing.B) {
 		middleware.GzipCompress(createGinContextCompress(b))
 	}
 }
+

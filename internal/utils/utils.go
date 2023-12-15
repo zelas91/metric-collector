@@ -1,4 +1,3 @@
-// Package utils helper methods for the service
 package utils
 
 import (

@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/lib/pq"
+	"sync"
 )
 
 var (
@@ -94,7 +93,7 @@ func (d *DBStorage) GetMetrics(ctx context.Context) []Metric {
 		return nil
 	}
 	defer func() {
-		if err = rows.Close(); err != nil {
+		if err := rows.Close(); err != nil {
 			log.Errorf("rows close err :%v", err)
 			return
 		}

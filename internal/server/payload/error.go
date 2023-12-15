@@ -4,7 +4,6 @@ package payload
 
 import (
 	"errors"
-
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 )
