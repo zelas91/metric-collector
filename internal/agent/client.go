@@ -21,7 +21,8 @@ var (
 )
 
 type ClientHTTP struct {
-	client *resty.Client
+	client    *resty.Client
+	publicKey []byte
 }
 
 func NewClientHTTP() *ClientHTTP {
@@ -227,8 +228,7 @@ func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<-
 }
 
 func updateMetrics(baseURL, key string, report <-chan []repository.Metric, exit <-chan time.Time) {
-	client := resty.New()
-	client.SetTimeout(1 * time.Second)
+	client := NewClientHTTP()
 	for m := range report {
 		headers := make(map[string]string)
 
@@ -260,9 +260,9 @@ func updateMetrics(baseURL, key string, report <-chan []repository.Metric, exit 
 		headers["Content-Type"] = "application/json"
 		headers["Content-Encoding"] = "gzip"
 
-		if err = requestPost(client, headers, gzipBody, baseURL); err != nil {
+		if err = requestPost(client.client, headers, gzipBody, baseURL); err != nil {
 			r := retryUpdateMetrics(requestPost, exit)
-			if err = r(client, headers, gzipBody, baseURL); err != nil {
+			if err = r(client.client, headers, gzipBody, baseURL); err != nil {
 				log.Errorf("retry err: %v", err)
 			}
 		}
