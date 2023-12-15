@@ -5,6 +5,10 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
+	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -287,8 +291,12 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	}
 	var body bytes.Buffer
 	gz := gzip.NewWriter(&body)
-	gz.Write(bodyJSON)
-	gz.Close()
+	if _, err := gz.Write(bodyJSON); err != nil {
+		log.Fatal(err)
+	}
+	if err = gz.Close(); err != nil {
+		log.Fatal(err)
+	}
 	w := httptest.NewRecorder()
 	file := "/tmp/metrics-db.json"
 	interval := 0
@@ -335,8 +343,12 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 	}
 	var body bytes.Buffer
 	gz := gzip.NewWriter(&body)
-	gz.Write(bodyJSON)
-	gz.Close()
+	if _, err := gz.Write(bodyJSON); err != nil {
+		log.Fatal(err)
+	}
+	if err = gz.Close(); err != nil {
+		log.Fatal(err)
+	}
 	mem := repository.NewMemStorage()
 	w := httptest.NewRecorder()
 	h := NewMetricHandler(service.NewMemService(context.Background(),
@@ -351,4 +363,116 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 		h.ServeHTTP(w, request)
 	}
 
+}
+
+func TestGetMetrics(t *testing.T) {
+	val := 29.23
+	tests := []struct {
+		name         string
+		mockBehavior func(s *mock_service.MockService)
+		method       string
+		url          string
+		statusCode   int
+	}{{
+		name:       "OK",
+		statusCode: http.StatusOK,
+		mockBehavior: func(s *mock_service.MockService) {
+			s.EXPECT().GetMetrics(gomock.Any()).Return([]repository.Metric{
+				{ID: "CPUZ",
+					MType: types.GaugeType,
+					Value: &val},
+			})
+		},
+		url:    "/",
+		method: http.MethodGet,
+	}}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			serv := mock_service.NewMockService(ctrl)
+			test.mockBehavior(serv)
+			handler := NewMetricHandler(serv)
+
+			request := httptest.NewRequest(test.method, test.url, nil)
+			//request.Header = test.header
+			w := httptest.NewRecorder()
+			h := handler.InitRoutes(nil)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+			defer res.Body.Close()
+			statusCode := res.StatusCode
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err, "Body read error")
+			assert.Equal(t, test.statusCode, statusCode)
+
+		})
+	}
+}
+func createGinContextDecompress(b *testing.B, body string) *gin.Context {
+	w := httptest.NewRecorder()
+	b.StopTimer()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest("post", "/test", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipDecompressMiddleware(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
+	gz.Write(bodyJSON)
+	gz.Close()
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipDecompress(createGinContextDecompress(b, body.String()))
+	}
+}
+func createGinContextCompress(b *testing.B) *gin.Context {
+	b.StopTimer()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipCompressMiddleware(b *testing.B) {
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipCompress(createGinContextCompress(b))
+	}
 }

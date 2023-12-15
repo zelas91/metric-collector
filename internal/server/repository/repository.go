@@ -1,3 +1,4 @@
+// Package repository working with data in memory, file or database format
 package repository
 
 import "context"

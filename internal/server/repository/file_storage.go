@@ -124,14 +124,17 @@ func (f *FileStorage) saveMetric() {
 }
 
 func (f *FileStorage) getMetricsFile() *MemStorage {
-	info, _ := f.file.Stat()
+	info, err := f.file.Stat()
+	if err != nil {
+		return nil
+	}
 	data := make([]byte, info.Size())
-	if _, err := f.file.Read(data); err != nil {
+	if _, err = f.file.Read(data); err != nil {
 		log.Errorf("read file err: %v", err)
 		return nil
 	}
 	var metrics []Metric
-	if err := json.Unmarshal(data, &metrics); err != nil {
+	if err = json.Unmarshal(data, &metrics); err != nil {
 		log.Errorf("read metrics db err: %v", err)
 		return nil
 	}

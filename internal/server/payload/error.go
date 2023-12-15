@@ -1,4 +1,5 @@
-// Package payload responses err  for the web server
+// Package payload error handler with response capability to the client
+
 package payload
 
 import (

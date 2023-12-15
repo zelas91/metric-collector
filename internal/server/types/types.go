@@ -1,3 +1,4 @@
+// Package types service data types
 package types
 
 const (
