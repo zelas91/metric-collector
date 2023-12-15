@@ -1,3 +1,4 @@
+// Package controller
 package controller
 
 import (
@@ -20,6 +21,7 @@ const (
 	paramType  = "type"
 	paramValue = "value"
 )
+
 const (
 	templateHTML = "<!DOCTYPE html> " +
 		`<html>       
@@ -48,6 +50,8 @@ type MetricHandler struct {
 func NewMetricHandler(memService service.Service) *MetricHandler {
 	return &MetricHandler{memService: memService}
 }
+
+// AddMetric  update metric by request string.
 func (h *MetricHandler) AddMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	value := c.Param(paramValue)
@@ -59,6 +63,7 @@ func (h *MetricHandler) AddMetric(c *gin.Context) {
 	}
 }
 
+// GetMetric  get value metric by req.
 func (h *MetricHandler) GetMetric(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	t := c.Param(paramType)
@@ -82,6 +87,7 @@ func (h *MetricHandler) GetMetric(c *gin.Context) {
 	}
 }
 
+// GetMetrics  html metrics list.
 func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	body, err := template.New("values").Parse(templateHTML)
@@ -106,6 +112,7 @@ func (h *MetricHandler) GetMetrics(c *gin.Context) {
 	}
 }
 
+// GetMetricJSON  get value metric by req format JSON.
 func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	if c.GetHeader("Content-Type") != "application/json" {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")
@@ -125,6 +132,8 @@ func (h *MetricHandler) GetMetricJSON(c *gin.Context) {
 	}
 	c.AbortWithStatusJSON(http.StatusOK, val)
 }
+
+// AddMetricJSON  update metric by request JSON.
 func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 
 	if c.GetHeader("Content-Type") != "application/json" {
@@ -147,6 +156,7 @@ func (h *MetricHandler) AddMetricJSON(c *gin.Context) {
 	c.AbortWithStatusJSON(http.StatusOK, res)
 }
 
+// Ping ping db connection.
 func (h *MetricHandler) Ping(c *gin.Context) {
 	ser, ok := h.memService.(repository.Ping)
 	if !ok {
@@ -160,6 +170,7 @@ func (h *MetricHandler) Ping(c *gin.Context) {
 	c.AbortWithStatus(http.StatusOK)
 }
 
+// AddMetrics  update metric array by request JSON.
 func (h *MetricHandler) AddMetrics(c *gin.Context) {
 	if c.GetHeader("Content-Type") != "application/json" {
 		payload.NewErrorResponseJSON(c, http.StatusUnsupportedMediaType, "incorrect media type ")

@@ -19,16 +19,17 @@ type calculateWriterHash struct {
 	key  string
 }
 
-// Write implementation
+// Write implementation.
 func (cw *calculateWriterHash) Write(b []byte) (int, error) {
 	return cw.body.Write(b)
 }
 
-// WriteString implementation
+// WriteString implementation.
 func (cw *calculateWriterHash) WriteString(b string) (int, error) {
 	return cw.body.WriteString(b)
 }
 
+// CalculateHash middleware.
 func CalculateHash(key *string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 

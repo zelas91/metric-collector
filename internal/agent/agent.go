@@ -1,3 +1,5 @@
+// Package agent  is used to collect metrics and send them by timeout to the web server.
+
 package agent
 
 import (
@@ -8,22 +10,26 @@ import (
 	"runtime"
 )
 
+// Stats struct  for obtaining metrics.
 type Stats struct {
 	runtime.MemStats
 	PollCount   int64
 	RandomValue int
 }
 
+// NewStats init struct Stats.
 func NewStats() *Stats {
 	return &Stats{PollCount: 0, RandomValue: 0}
 }
 
+// ReadStats fill metrics struct.
 func (s *Stats) ReadStats() {
 	runtime.ReadMemStats(&s.MemStats)
 	s.PollCount += 1
 	s.RandomValue = rand.Int()
 }
 
+// GetMemoryAndCPU return metrics cpu and memory's.
 func (s *Stats) GetMemoryAndCPU() map[string]float64 {
 	v, err := mem.VirtualMemory()
 	if err != nil {
@@ -45,6 +51,9 @@ func (s *Stats) GetMemoryAndCPU() map[string]float64 {
 	}
 	return result
 }
+
+// GetGauges is a method for getting values from the Stats structure in the form of a map of statistical values of the float64 type.
+// Returns a map where the key is the name of the statistical value from the Stats structure, and the value is the corresponding value reduced to the float64 type.
 func (s *Stats) GetGauges() map[string]float64 {
 	return map[string]float64{
 		"Alloc":         float64(s.Alloc),
@@ -78,6 +87,8 @@ func (s *Stats) GetGauges() map[string]float64 {
 	}
 }
 
+// GetCounters is a method for getting values from the Stats structure in the form of a map of statistical values of the int64 type.
+// Returns a map where the key is the name of the statistical value from the Stats structure, and the value is the corresponding value reduced to the int64 type.
 func (s *Stats) GetCounters() map[string]int64 {
 	return map[string]int64{
 		"PollCount": s.PollCount,
