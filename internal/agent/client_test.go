@@ -2,14 +2,13 @@ package agent
 
 import (
 	"context"
-	"net/http/httptest"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestUpdateMetrics(t *testing.T) {

@@ -1,13 +1,11 @@
-// Package agent  is used to send data with metrics to the web service.
 package agent
 
 import (
 	"fmt"
-	"math/rand"
-	"runtime"
-
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"math/rand"
+	"runtime"
 )
 
 type Stats struct {

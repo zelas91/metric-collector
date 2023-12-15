@@ -1,4 +1,3 @@
-// Package controller implements any handler for server.
 package controller
 
 import (
@@ -6,7 +5,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
 )
 
-// InitRoutes returns initialized gin.Engine .
 func (h *MetricHandler) InitRoutes(hashKey *string) *gin.Engine {
 	router := gin.New()
 

@@ -1,4 +1,3 @@
-// Package config - config web service.
 package config
 
 type Config struct {

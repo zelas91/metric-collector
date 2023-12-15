@@ -6,12 +6,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"io"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/utils"
+	"io"
+	"net/http"
 )
 
 type calculateWriterHash struct {
@@ -93,7 +92,7 @@ func HashCheck(key *string) gin.HandlerFunc {
 			return
 		}
 		defer func() {
-			if err = c.Request.Body.Close(); err != nil {
+			if err := c.Request.Body.Close(); err != nil {
 				log.Errorf("new check body close err: %v", err)
 			}
 		}()

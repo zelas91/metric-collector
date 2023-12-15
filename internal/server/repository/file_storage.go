@@ -3,12 +3,11 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server/config"
 	"os"
 	"sync"
 	"time"
-
-	"github.com/zelas91/metric-collector/internal/logger"
-	"github.com/zelas91/metric-collector/internal/server/config"
 )
 
 var (
@@ -120,17 +119,14 @@ func (f *FileStorage) saveMetric() {
 }
 
 func (f *FileStorage) getMetricsFile() *MemStorage {
-	info, err := f.file.Stat()
-	if err != nil {
-		return nil
-	}
+	info, _ := f.file.Stat()
 	data := make([]byte, info.Size())
-	if _, err = f.file.Read(data); err != nil {
+	if _, err := f.file.Read(data); err != nil {
 		log.Errorf("read file err: %v", err)
 		return nil
 	}
 	var metrics []Metric
-	if err = json.Unmarshal(data, &metrics); err != nil {
+	if err := json.Unmarshal(data, &metrics); err != nil {
 		log.Errorf("read metrics db err: %v", err)
 		return nil
 	}
