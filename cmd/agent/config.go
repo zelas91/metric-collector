@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/zelas91/metric-collector/internal/logger"
 )
@@ -14,6 +15,9 @@ var (
 	key            *string
 	rateLimit      *int
 	log            = logger.New()
+	buildVersion   string
+	buildDate      string
+	buildCommit    string
 )
 
 func init() {
@@ -22,6 +26,7 @@ func init() {
 	reportInterval = flag.Int("r", 10, " poll interval ")
 	key = flag.String("k", "", "key hash")
 	rateLimit = flag.Int("l", 1, "rate_limit")
+	printVersion()
 }
 
 type Config struct {
@@ -57,4 +62,15 @@ func NewConfig() *Config {
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
+}
+func printVersion() {
+	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
+	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
+	fmt.Printf("Build commit: %s\n", getBuildValue(buildCommit))
+}
+func getBuildValue(value string) string {
+	if value == "" {
+		return "N/A"
+	}
+	return value
 }

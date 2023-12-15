@@ -1,19 +1,26 @@
 package controller
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
+	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestAddMetric(t *testing.T) {
@@ -252,5 +259,212 @@ func TestGetMetricJSON(t *testing.T) {
 			assert.Equal(t, test.want.statusCode, statusCode, "status code not as expected")
 			assert.Equal(t, test.want.body, result, "status code not as expected")
 		})
+	}
+}
+
+func BenchmarkAddMetricJSONFile(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
+	gz.Write(bodyJSON)
+	gz.Close()
+	w := httptest.NewRecorder()
+	file := "/tmp/metrics-db.json"
+	interval := 0
+	h := NewMetricHandler(service.NewMemService(context.Background(),
+		repository.NewFileStorage(context.TODO(), &config.Config{FilePath: &file,
+			StoreInterval: &interval}), &config.Config{})).InitRoutes(nil)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(body.String()))
+		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
+		b.StartTimer()
+		h.ServeHTTP(w, request)
+	}
+}
+
+func BenchmarkAddMetricJSON(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
+	gz.Write(bodyJSON)
+	gz.Close()
+	mem := repository.NewMemStorage()
+	w := httptest.NewRecorder()
+	h := NewMetricHandler(service.NewMemService(context.Background(),
+		mem, &config.Config{})).InitRoutes(nil)
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		request := httptest.NewRequest(http.MethodPost, "/updates", strings.NewReader(body.String()))
+		request.Header = map[string][]string{"Content-Type": {"application/json"}, "Content-Encoding": {"gzip"}}
+		b.StartTimer()
+		h.ServeHTTP(w, request)
+	}
+
+}
+
+func TestGetMetrics(t *testing.T) {
+	val := 29.23
+	tests := []struct {
+		name         string
+		mockBehavior func(s *mock_service.MockService)
+		method       string
+		url          string
+		statusCode   int
+	}{{
+		name:       "OK",
+		statusCode: http.StatusOK,
+		mockBehavior: func(s *mock_service.MockService) {
+			s.EXPECT().GetMetrics(gomock.Any()).Return([]repository.Metric{
+				{ID: "CPUZ",
+					MType: types.GaugeType,
+					Value: &val},
+			})
+		},
+		url:    "/",
+		method: http.MethodGet,
+	}}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			serv := mock_service.NewMockService(ctrl)
+			test.mockBehavior(serv)
+			handler := NewMetricHandler(serv)
+
+			request := httptest.NewRequest(test.method, test.url, nil)
+			//request.Header = test.header
+			w := httptest.NewRecorder()
+			h := handler.InitRoutes(nil)
+			h.ServeHTTP(w, request)
+			res := w.Result()
+			defer res.Body.Close()
+			statusCode := res.StatusCode
+			_, err := io.ReadAll(res.Body)
+			require.NoError(t, err, "Body read error")
+			assert.Equal(t, test.statusCode, statusCode)
+
+		})
+	}
+}
+func createGinContextDecompress(b *testing.B, body string) *gin.Context {
+	w := httptest.NewRecorder()
+	b.StopTimer()
+	c, _ := gin.CreateTestContext(w)
+	req, _ := http.NewRequest("post", "/test", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipDecompressMiddleware(b *testing.B) {
+	metrics := []repository.Metric{
+		{ID: "Test",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test2",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test3",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test4",
+			MType: types.GaugeType,
+			Value: new(float64)},
+		{ID: "Test5",
+			MType: types.CounterType,
+			Delta: new(int64)},
+	}
+	*metrics[0].Value = 20.75
+	*metrics[1].Value = 20.75
+	*metrics[2].Value = 20.75
+	*metrics[3].Value = 20.75
+	*metrics[4].Delta = 100
+	bodyJSON, err := json.Marshal(metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var body bytes.Buffer
+	gz := gzip.NewWriter(&body)
+	gz.Write(bodyJSON)
+	gz.Close()
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipDecompress(createGinContextDecompress(b, body.String()))
+	}
+}
+func createGinContextCompress(b *testing.B) *gin.Context {
+	b.StopTimer()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	req, _ := http.NewRequest("GET", "/test", nil)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	c.Request = req
+	b.StartTimer()
+	return c
+}
+func BenchmarkGzipCompressMiddleware(b *testing.B) {
+
+	for i := 0; i < b.N; i++ {
+		middleware.GzipCompress(createGinContextCompress(b))
 	}
 }

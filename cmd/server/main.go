@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/zelas91/metric-collector/internal/logger"
-	"github.com/zelas91/metric-collector/internal/server"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/zelas91/metric-collector/internal/logger"
+	"github.com/zelas91/metric-collector/internal/server"
 )
 
 func main() {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
@@ -15,6 +17,9 @@ var (
 	filePath      *string
 	database      *string
 	key           *string
+	buildVersion  string
+	buildDate     string
+	buildCommit   string
 )
 
 func init() {
@@ -24,6 +29,7 @@ func init() {
 	filePath = flag.String("f", "/tmp/metrics-db.json", "file path ")
 	database = flag.String("d", "", "Database URL")
 	key = flag.String("k", "", "key hash")
+	printVersion()
 }
 
 func NewConfig() *config.Config {
@@ -56,4 +62,15 @@ func NewConfig() *config.Config {
 	}
 	flag.Parse()
 	return &cfg
+}
+func printVersion() {
+	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
+	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
+	fmt.Printf("Build commit: %s\n", getBuildValue(buildCommit))
+}
+func getBuildValue(value string) string {
+	if value == "" {
+		return "N/A"
+	}
+	return value
 }
