@@ -23,6 +23,7 @@ type gzipWriter struct {
 	gin.ResponseWriter
 }
 
+// GzipCompress middleware.
 func GzipCompress(c *gin.Context) {
 
 	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
@@ -81,6 +82,7 @@ func releaseGzipReader(reader *gzip.Reader) {
 	gzipReaderPool.Put(reader)
 }
 
+// GzipDecompress middleware.
 func GzipDecompress(c *gin.Context) {
 	if c.Request.Header.Get("Content-Encoding") == "gzip" {
 		body := getGzipReader()

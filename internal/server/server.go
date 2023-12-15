@@ -1,4 +1,5 @@
-// Package server init and start web server go
+// Package server start and shutdown web server.
+
 package server
 
 import (
@@ -25,6 +26,7 @@ type Server struct {
 	repo repository.StorageRepository
 }
 
+// Run start web server.
 func Run(ctx context.Context, cfg *config.Config) {
 	gin.SetMode(gin.ReleaseMode)
 
@@ -56,6 +58,8 @@ func Run(ctx context.Context, cfg *config.Config) {
 	}()
 	log.Info("start server")
 }
+
+// Shutdown web server.
 func Shutdown(ctx context.Context) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()

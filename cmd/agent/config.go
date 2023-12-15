@@ -29,6 +29,7 @@ func init() {
 	printVersion()
 }
 
+// Config structure for launching the agent service.
 type Config struct {
 	BaseURL        string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
@@ -37,6 +38,7 @@ type Config struct {
 	RateLimit      *int   `env:"RATE_LIMIT"`
 }
 
+// NewConfig initialize struct config by environment variables and flags.
 func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
