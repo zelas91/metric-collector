@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-
 	"github.com/caarlos0/env/v6"
 	"github.com/zelas91/metric-collector/internal/logger"
 )
@@ -69,6 +68,7 @@ func NewConfig() *Config {
 	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
 }
+
 func printVersion() {
 	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
 	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
