@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"github.com/zelas91/metric-collector/internal/agent"
+
 	"github.com/zelas91/metric-collector/internal/crypto"
+
+
 	"github.com/zelas91/metric-collector/internal/logger"
 	"os"
 	"os/signal"

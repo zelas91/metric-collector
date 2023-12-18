@@ -14,10 +14,13 @@ var (
 	key            *string
 	rateLimit      *int
 	log            = logger.New()
+
 	buildVersion   string
 	buildDate      string
 	buildCommit    string
 	cryptoKey      *string
+
+
 )
 
 func init() {
@@ -26,10 +29,14 @@ func init() {
 	reportInterval = flag.Int("r", 10, " poll interval ")
 	key = flag.String("k", "", "key hash")
 	rateLimit = flag.Int("l", 1, "rate_limit")
+
 	cryptoKey = flag.String("crypto-key", "", "public key")
 	printVersion()
+
+
 }
 
+// Config structure for launching the agent service.
 type Config struct {
 	BaseURL        string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
@@ -39,6 +46,7 @@ type Config struct {
 	CryptoCertPath string `env:"CRYPTO_KEY"`
 }
 
+// NewConfig initialize struct config by environment variables and flags.
 func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)
@@ -69,6 +77,7 @@ func NewConfig() *Config {
 	return &cfg
 }
 
+
 func printVersion() {
 	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
 	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
@@ -80,3 +89,5 @@ func getBuildValue(value string) string {
 	}
 	return value
 }
+
+

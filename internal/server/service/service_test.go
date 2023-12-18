@@ -3,15 +3,14 @@ package service
 import (
 	"context"
 	"errors"
-	"strconv"
-	"testing"
-
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	mock "github.com/zelas91/metric-collector/internal/server/repository/mocks"
 	"github.com/zelas91/metric-collector/internal/server/types"
+	"strconv"
+	"testing"
 )
 
 func TestAddMetricJSON(t *testing.T) {
