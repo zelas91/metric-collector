@@ -39,6 +39,7 @@ type Config struct {
 	CryptoCertPath string `env:"CRYPTO_KEY"`
 }
 
+// NewConfig initialize struct config by environment variables and flags.
 func NewConfig() *Config {
 	var cfg Config
 	err := env.Parse(&cfg)

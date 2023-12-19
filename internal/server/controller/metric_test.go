@@ -291,8 +291,12 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	}
 	var body bytes.Buffer
 	gz := gzip.NewWriter(&body)
-	gz.Write(bodyJSON)
-	gz.Close()
+	if _, err := gz.Write(bodyJSON); err != nil {
+		log.Fatal(err)
+	}
+	if err = gz.Close(); err != nil {
+		log.Fatal(err)
+	}
 	w := httptest.NewRecorder()
 	file := "/tmp/metrics-db.json"
 	interval := 0

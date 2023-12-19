@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/zelas91/metric-collector/internal/crypto"
+	"github.com/zelas91/metric-collector/internal/utils/crypto"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -27,6 +27,7 @@ type ClientHTTP struct {
 	publicKey []byte
 }
 
+// NewClientHTTP initialize http client
 func NewClientHTTP() *ClientHTTP {
 	client := resty.New()
 	client.SetTimeout(2 * time.Second)
@@ -93,6 +94,8 @@ func retryUpdateMetrics(effector effectorUpdateMetrics, exit <-chan time.Time) e
 		}
 	}
 }
+
+// UpdateMetrics send metrics to web server.
 func (c *ClientHTTP) UpdateMetrics(s *Stats, baseURL, key string) error {
 	gauges := createGauges(s)
 	counters := createCounters(s)
@@ -162,6 +165,7 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 	ch <- append(createCounters(s), createGauges(s)...)
 }
 
+// Run start goroutine to call the metrics update.
 func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey *rsa.PublicKey) {
 	s := NewStats()
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)

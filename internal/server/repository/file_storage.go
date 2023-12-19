@@ -1,3 +1,5 @@
+// Package repository to work with data.
+
 package repository
 
 import (
@@ -16,6 +18,7 @@ var (
 	once sync.Once
 )
 
+// FileStorage to work with data in file.
 type FileStorage struct {
 	file *os.File
 	mem  *MemStorage
@@ -23,6 +26,7 @@ type FileStorage struct {
 	ctx  context.Context
 }
 
+// NewFileStorage make FileStorage struct.
 func NewFileStorage(ctx context.Context, cfg *config.Config) *FileStorage {
 	storage := &FileStorage{ctx: ctx, cfg: cfg}
 
@@ -44,6 +48,7 @@ func NewFileStorage(ctx context.Context, cfg *config.Config) *FileStorage {
 	return storage
 }
 
+// Shutdown close file.
 func (f *FileStorage) Shutdown() error {
 	return f.file.Close()
 }

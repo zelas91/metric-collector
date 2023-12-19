@@ -32,6 +32,7 @@ func init() {
 	printVersion()
 }
 
+// NewConfig initialize struct config by environment variables and flags.
 func NewConfig() *config.Config {
 	var cfg config.Config
 	err := env.Parse(&cfg)

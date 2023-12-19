@@ -1,4 +1,5 @@
-// Package logger is log zap.
+// Package logger to initialize the logger.
+
 package logger
 
 import (
@@ -13,11 +14,14 @@ import (
 var logger *zap.SugaredLogger
 var once sync.Once
 
+// Shutdown stop logger.
 func Shutdown() {
 	if err := logger.Sync(); err != nil {
 		log.Printf("logger sync %v", err)
 	}
 }
+
+// New creates a logger once.
 func New() *zap.SugaredLogger {
 
 	once.Do(func() {

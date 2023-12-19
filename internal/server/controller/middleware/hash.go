@@ -30,6 +30,7 @@ func (cw *calculateWriterHash) WriteString(b string) (int, error) {
 	return cw.body.WriteString(b)
 }
 
+// CalculateHash middleware.
 func CalculateHash(key *string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
