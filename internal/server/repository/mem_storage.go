@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"errors"
-
 	"github.com/zelas91/metric-collector/internal/server/types"
 )
 

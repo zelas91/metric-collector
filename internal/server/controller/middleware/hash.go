@@ -6,12 +6,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"io"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/server/payload"
 	"github.com/zelas91/metric-collector/internal/utils"
+	"io"
+	"net/http"
 )
 
 type calculateWriterHash struct {
@@ -20,16 +19,17 @@ type calculateWriterHash struct {
 	key  string
 }
 
-// Write implementation
+// Write implementation.
 func (cw *calculateWriterHash) Write(b []byte) (int, error) {
 	return cw.body.Write(b)
 }
 
-// WriteString implementation
+// WriteString implementation.
 func (cw *calculateWriterHash) WriteString(b string) (int, error) {
 	return cw.body.WriteString(b)
 }
 
+// CalculateHash middleware.
 func CalculateHash(key *string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -93,7 +93,7 @@ func HashCheck(key *string) gin.HandlerFunc {
 			return
 		}
 		defer func() {
-			if err = c.Request.Body.Close(); err != nil {
+			if err := c.Request.Body.Close(); err != nil {
 				log.Errorf("new check body close err: %v", err)
 			}
 		}()

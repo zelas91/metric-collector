@@ -1,28 +1,24 @@
-// Package middleware -Controller toolkit
 package middleware
 
 import (
 	"compress/gzip"
+	"github.com/gin-gonic/gin"
 	"strings"
 	"sync"
-
-	"github.com/gin-gonic/gin"
 )
 
-var (
-	gzipWritePool = &sync.Pool{
-		New: func() interface{} {
-			return gzip.NewWriter(nil)
-		},
-	}
-	gzipReaderPool sync.Pool
-)
+var gzipWritePool = &sync.Pool{
+	New: func() interface{} {
+		return gzip.NewWriter(nil)
+	},
+}
 
 type gzipWriter struct {
 	writer *gzip.Writer
 	gin.ResponseWriter
 }
 
+// GzipCompress middleware.
 func GzipCompress(c *gin.Context) {
 
 	if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
@@ -68,27 +64,20 @@ func releaseGzipWriter(writer *gzip.Writer) {
 	}(writer)
 	gzipWritePool.Put(writer)
 }
-func getGzipReader() *gzip.Reader {
-	obj := gzipReaderPool.Get()
-	if obj == nil {
-		return &gzip.Reader{}
-	}
 
-	return obj.(*gzip.Reader)
-}
-
-func releaseGzipReader(reader *gzip.Reader) {
-	gzipReaderPool.Put(reader)
-}
-
+// GzipDecompress middleware.
 func GzipDecompress(c *gin.Context) {
 	if c.Request.Header.Get("Content-Encoding") == "gzip" {
-		body := getGzipReader()
-		defer releaseGzipReader(body)
-		err := body.Reset(c.Request.Body)
+		body, err := gzip.NewReader(c.Request.Body)
 		if err != nil {
-			log.Errorf("gzip decompress reset reader err: %v", err)
+			log.Errorf("gzip decompress new reader err: %v", err)
 		}
+		defer func() {
+			if err := body.Close(); err != nil {
+				log.Errorf("GZIP DECOMPRESS BODY CLOSE ERR:%v", err)
+			}
+		}()
+
 		c.Request.Body = body
 		c.Request.Header.Del("Content-Encoding")
 		c.Request.Header.Del("Content-Length")

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/zelas91/metric-collector/internal/agent"
+	"github.com/zelas91/metric-collector/internal/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -9,6 +11,7 @@ import (
 	"github.com/zelas91/metric-collector/internal/agent"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
+
 )
 
 func main() {
