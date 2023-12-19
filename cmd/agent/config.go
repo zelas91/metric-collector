@@ -15,9 +15,9 @@ var (
 	key            *string
 	rateLimit      *int
 	log            = logger.New()
-	buildVersion   string
-	buildDate      string
-	buildCommit    string
+	buildVersion   = "N/A"
+	buildDate      = "N/A"
+	buildCommit    = "N/A"
 	cryptoKey      *string
 )
 
@@ -70,13 +70,7 @@ func NewConfig() *Config {
 	return &cfg
 }
 func printVersion() {
-	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
-	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
-	fmt.Printf("Build commit: %s\n", getBuildValue(buildCommit))
-}
-func getBuildValue(value string) string {
-	if value == "" {
-		return "N/A"
-	}
-	return value
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 }

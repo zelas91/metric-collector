@@ -16,9 +16,9 @@ var (
 	filePath      *string
 	database      *string
 	key           *string
-	buildVersion  string
-	buildDate     string
-	buildCommit   string
+	buildVersion  = "N/A"
+	buildDate     = "N/A"
+	buildCommit   = "N/A"
 	cryptoKey     *string
 )
 
@@ -29,7 +29,7 @@ func init() {
 	filePath = flag.String("f", "/tmp/metrics-db.json", "file path ")
 	database = flag.String("d", "", "Database URL")
 	key = flag.String("k", "", "key hash")
-	cryptoKey = flag.String("crypto-key", "", "public key")
+	cryptoKey = flag.String("crypto-key", "", "private key")
 	printVersion()
 }
 
@@ -40,7 +40,7 @@ func NewConfig() *config.Config {
 	if err != nil {
 		log.Errorf("read env error=%v", err)
 	}
-
+	flag.Parse()
 	if cfg.Addr == nil {
 		cfg.Addr = addr
 	}
@@ -62,20 +62,16 @@ func NewConfig() *config.Config {
 	if cfg.Key == nil {
 		cfg.Key = key
 	}
+
 	if cfg.CryptoCertPath == "" {
 		cfg.CryptoCertPath = *cryptoKey
 	}
-	flag.Parse()
+
 	return &cfg
 }
+
 func printVersion() {
-	fmt.Printf("Build version: %s\n", getBuildValue(buildVersion))
-	fmt.Printf("Build date: %s\n", getBuildValue(buildDate))
-	fmt.Printf("Build commit: %s\n", getBuildValue(buildCommit))
-}
-func getBuildValue(value string) string {
-	if value == "" {
-		return "N/A"
-	}
-	return value
+	fmt.Printf("Build version: %s\n", buildVersion)
+	fmt.Printf("Build date: %s\n", buildDate)
+	fmt.Printf("Build commit: %s\n", buildCommit)
 }
