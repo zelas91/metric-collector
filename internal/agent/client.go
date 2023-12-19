@@ -17,7 +17,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"github.com/zelas91/metric-collector/internal/utils"
-	"time"
 )
 
 var (
