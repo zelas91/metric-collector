@@ -25,7 +25,6 @@ func init() {
 	addr = flag.String("a", "localhost:8080", "endpoint start server")
 	pollInterval = flag.Int("p", 2, " poll interval ")
 	reportInterval = flag.Int("r", 10, " poll interval ")
-
 	key = flag.String("k", "", "key hash")
 	rateLimit = flag.Int("l", 1, "rate_limit")
 	cryptoKey = flag.String("crypto-key", "", "public key")
