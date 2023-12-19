@@ -3,12 +3,11 @@ package middleware
 import (
 	"context"
 	"errors"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/payload"
+	"net/http"
+	"time"
 )
 
 var log = logger.New()

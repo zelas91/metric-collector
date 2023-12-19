@@ -1,18 +1,18 @@
-// Package server init and start web server go
+// Package server start and shutdown web server.
+
 package server
 
 import (
 	"context"
 	"errors"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
+	"net/http"
+	"time"
 )
 
 var (

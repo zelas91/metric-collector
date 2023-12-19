@@ -1,4 +1,3 @@
-// Package repository working with data in memory, file or database format
 package repository
 
 import "context"
@@ -7,14 +6,19 @@ import "context"
 //
 //go:generate mockgen -package mocks -destination=./mocks/mock_repository.go -source=repository.go -package=mock StorageRepository
 type StorageRepository interface {
+	// AddMetric adds a metric to the storage.
 	AddMetric(ctx context.Context, metrics Metric) *Metric
+	// GetMetric gets a metric from the repository by name.
 	GetMetric(ctx context.Context, name string) (*Metric, error)
+	// GetMetrics gets all metrics from the repository.
 	GetMetrics(ctx context.Context) []Metric
+	// AddMetrics adds a metric slice to the repository.
 	AddMetrics(ctx context.Context, metrics []Metric) error
 }
 
 // Shutdown - interface for shutdown.
 type Shutdown interface {
+	// Shutdown performs shutdown.
 	Shutdown() error
 }
 

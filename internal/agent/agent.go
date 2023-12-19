@@ -1,13 +1,13 @@
-// Package agent  is used to send data with metrics to the web service.
+// Package agent  is used to collect metrics and send them by timeout to the web server.
+
 package agent
 
 import (
 	"fmt"
-	"math/rand"
-	"runtime"
-
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
+	"math/rand"
+	"runtime"
 )
 
 // Stats struct  for obtaining metrics.
