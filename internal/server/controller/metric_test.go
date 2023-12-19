@@ -1,19 +1,26 @@
 package controller
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
+	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
+	mock_service "github.com/zelas91/metric-collector/internal/server/service/mocks"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 )
 
 func TestAddMetric(t *testing.T) {
@@ -284,12 +291,8 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	}
 	var body bytes.Buffer
 	gz := gzip.NewWriter(&body)
-	if _, err := gz.Write(bodyJSON); err != nil {
-		log.Fatal(err)
-	}
-	if err = gz.Close(); err != nil {
-		log.Fatal(err)
-	}
+	gz.Write(bodyJSON)
+	gz.Close()
 	w := httptest.NewRecorder()
 	file := "/tmp/metrics-db.json"
 	interval := 0
@@ -336,12 +339,8 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 	}
 	var body bytes.Buffer
 	gz := gzip.NewWriter(&body)
-	if _, err := gz.Write(bodyJSON); err != nil {
-		log.Fatal(err)
-	}
-	if err = gz.Close(); err != nil {
-		log.Fatal(err)
-	}
+	gz.Write(bodyJSON)
+	gz.Close()
 	mem := repository.NewMemStorage()
 	w := httptest.NewRecorder()
 	h := NewMetricHandler(service.NewMemService(context.Background(),
@@ -464,9 +463,7 @@ func createGinContextCompress(b *testing.B) *gin.Context {
 	return c
 }
 func BenchmarkGzipCompressMiddleware(b *testing.B) {
-
 	for i := 0; i < b.N; i++ {
 		middleware.GzipCompress(createGinContextCompress(b))
 	}
 }
-

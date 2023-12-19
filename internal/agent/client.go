@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/zelas91/metric-collector/internal/utils/crypto"
+	"time"
+
+
 	"github.com/go-resty/resty/v2"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"github.com/zelas91/metric-collector/internal/utils"
-	"time"
 )
 
 var (
@@ -162,7 +166,7 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 }
 
 // Run start goroutine to call the metrics update.
-func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey *rsa.PublicKey) {
 	s := NewStats()
 
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
@@ -173,9 +177,8 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 	updChan := make(chan []repository.Metric, 64)
 
 	for w := 0; w < rateLimit; w++ {
-		go updateMetrics(baseURL, key, updChan, tickerReport.C)
+		go updateMetrics(baseURL, key, pubKey, updChan, tickerReport.C)
 	}
-
 	go func() {
 		for {
 			select {
@@ -229,9 +232,8 @@ func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<-
 	}
 }
 
-func updateMetrics(baseURL, key string, report <-chan []repository.Metric, exit <-chan time.Time) {
-	client := resty.New()
-	client.SetTimeout(1 * time.Second)
+func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []repository.Metric, exit <-chan time.Time) {
+	client := NewClientHTTP()
 	for m := range report {
 		headers := make(map[string]string)
 
@@ -240,14 +242,22 @@ func updateMetrics(baseURL, key string, report <-chan []repository.Metric, exit 
 			log.Errorf("update metrics marshal err :%v", err)
 			continue
 		}
+		log.Info("BEFORE BODY ", len(body))
 
-		gzipBody, err := gzipCompress(body)
+		body, err = gzipCompress(body)
 		if err != nil {
 			log.Errorf("error compress body %v", err)
 			continue
 		}
+		log.Info("AFTER GZIP ", len(body))
 
-		hash, err := utils.GenerateHash(gzipBody, key)
+		body, err = crypto.Encrypt(pubKey, body)
+		if err != nil {
+			log.Errorf("encrypt err: %v", err)
+			continue
+		}
+		log.Info("AFTER crypto ", len(body))
+		hash, err := utils.GenerateHash(body, key)
 
 		if err != nil {
 			if !errors.Is(err, utils.ErrInvalidKey) {
@@ -263,16 +273,15 @@ func updateMetrics(baseURL, key string, report <-chan []repository.Metric, exit 
 		headers["Content-Type"] = "application/json"
 		headers["Content-Encoding"] = "gzip"
 
-		if err = requestPost(client, headers, gzipBody, baseURL); err != nil {
+		if err = requestPost(client.client, headers, body, baseURL); err != nil {
 			r := retryUpdateMetrics(requestPost, exit)
-			if err = r(client, headers, gzipBody, baseURL); err != nil {
+			if err = r(client.client, headers, body, baseURL); err != nil {
 				log.Errorf("retry err: %v", err)
 			}
 		}
 
 	}
 }
-
 func requestPost(client *resty.Client, header map[string]string, body []byte, url string) error {
 	resp, err := client.R().SetHeaders(header).
 		SetBody(body).
