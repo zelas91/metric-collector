@@ -463,7 +463,6 @@ func createGinContextCompress(b *testing.B) *gin.Context {
 	return c
 }
 func BenchmarkGzipCompressMiddleware(b *testing.B) {
-
 	for i := 0; i < b.N; i++ {
 		middleware.GzipCompress(createGinContextCompress(b))
 	}

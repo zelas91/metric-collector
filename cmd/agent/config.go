@@ -18,6 +18,7 @@ var (
 	buildVersion   string
 	buildDate      string
 	buildCommit    string
+	cryptoKey      *string
 )
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 	reportInterval = flag.Int("r", 10, " poll interval ")
 	key = flag.String("k", "", "key hash")
 	rateLimit = flag.Int("l", 1, "rate_limit")
+	cryptoKey = flag.String("crypto-key", "", "public key")
 	printVersion()
 }
 
@@ -35,6 +37,7 @@ type Config struct {
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
 	RateLimit      *int   `env:"RATE_LIMIT"`
+	CryptoCertPath string `env:"CRYPTO_KEY"`
 }
 
 func NewConfig() *Config {
@@ -59,6 +62,9 @@ func NewConfig() *Config {
 	}
 	if cfg.RateLimit == nil {
 		cfg.RateLimit = rateLimit
+	}
+	if cfg.CryptoCertPath == "" {
+		cfg.CryptoCertPath = *cryptoKey
 	}
 	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
 	return &cfg
