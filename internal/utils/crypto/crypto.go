@@ -14,6 +14,7 @@ func LoadPublicKey(path string) *rsa.PublicKey {
 	block, err := loadBlock(path)
 	if err != nil {
 		log.Errorf("error read file public key = %s  err: %v", path, err)
+		return nil
 	}
 	pub, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
@@ -31,6 +32,7 @@ func LoadPrivateKey(path string) *rsa.PrivateKey {
 	block, err := loadBlock(path)
 	if err != nil {
 		log.Errorf("error read file private key = %s  err: %v", path, err)
+		return nil
 	}
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
@@ -53,7 +55,6 @@ func loadBlock(path string) (*pem.Block, error) {
 }
 func SplitData(data []byte, size int) [][]byte {
 	var chunk []byte
-	size -= 11
 	chunks := make([][]byte, 0, len(data)/size+1)
 	for len(data) >= size {
 		chunk, data = data[:size], data[size:]

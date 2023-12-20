@@ -11,6 +11,7 @@ import (
 	"github.com/zelas91/metric-collector/internal/server/controller"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
+	"github.com/zelas91/metric-collector/internal/utils/crypto"
 	"net/http"
 	"time"
 )
@@ -46,7 +47,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	serv = &Server{
 		http: &http.Server{
 			Addr:    *cfg.Addr,
-			Handler: metric.InitRoutes(cfg.Key), // Ваш обработчик запросов
+			Handler: metric.InitRoutes(cfg.Key, crypto.LoadPrivateKey(cfg.CryptoCertPath)), // Ваш обработчик запросов
 		},
 		repo: repo,
 	}
