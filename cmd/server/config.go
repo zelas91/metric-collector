@@ -95,7 +95,7 @@ func NewConfig() *config.Config {
 			if cfg.CryptoCertPath == defaultCryptoKey {
 				cfg.CryptoCertPath = configJSON.CryptoCertPath
 			}
-			if cfg.Restore == nil || *cfg.Restore == defaultRestore {
+			if *cfg.Restore {
 				cfg.Restore = configJSON.Restore
 			}
 			if *cfg.FilePath == defaultStoreFile {
