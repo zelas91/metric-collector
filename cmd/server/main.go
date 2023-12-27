@@ -11,7 +11,7 @@ import (
 
 func main() {
 	cfg := NewConfig()
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	_ = cancel
 	server.Run(ctx, cfg)
 	<-ctx.Done()
