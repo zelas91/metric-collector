@@ -11,7 +11,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
 	"time"
 
-
 	"github.com/go-resty/resty/v2"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/repository"
@@ -242,21 +241,18 @@ func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []r
 			log.Errorf("update metrics marshal err :%v", err)
 			continue
 		}
-		log.Info("BEFORE BODY ", len(body))
 
 		body, err = gzipCompress(body)
 		if err != nil {
 			log.Errorf("error compress body %v", err)
 			continue
 		}
-		log.Info("AFTER GZIP ", len(body))
 
 		body, err = crypto.Encrypt(pubKey, body)
 		if err != nil {
 			log.Errorf("encrypt err: %v", err)
 			continue
 		}
-		log.Info("AFTER crypto ", len(body))
 		hash, err := utils.GenerateHash(body, key)
 
 		if err != nil {
