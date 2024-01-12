@@ -47,7 +47,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 	serv = &Server{
 		http: &http.Server{
 			Addr:    *cfg.Addr,
-			Handler: metric.InitRoutes(cfg.Key, crypto.LoadPrivateKey(cfg.CryptoCertPath)), // Ваш обработчик запросов
+			Handler: metric.InitRoutes(cfg.Key, crypto.LoadPrivateKey(cfg.CryptoCertPath), cfg.TrustedSubnet), // Ваш обработчик запросов
 		},
 		repo: repo,
 	}

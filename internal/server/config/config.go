@@ -9,4 +9,5 @@ type Config struct {
 	Key            *string `env:"KEY"`
 	CryptoCertPath string  `env:"CRYPTO_KEY" json:"crypto_key"`
 	JSONConfig     string  `env:"CONFIG"`
+	TrustedSubnet  string  `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 }

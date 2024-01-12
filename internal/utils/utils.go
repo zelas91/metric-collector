@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net"
 )
 
 var ErrInvalidKey = errors.New("invalid key")
@@ -26,4 +27,12 @@ func GenerateHash(body []byte, key string) (*string, error) {
 	}
 	hash := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	return &hash, nil
+}
+
+func GetSubnet(subnet string) (*net.IPNet, bool) {
+	_, network, err := net.ParseCIDR(subnet)
+	if err != nil {
+		return nil, false
+	}
+	return network, true
 }

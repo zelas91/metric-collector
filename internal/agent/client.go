@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -24,6 +26,7 @@ var (
 
 type ClientHTTP struct {
 	client *resty.Client
+	IP     string
 }
 
 // NewClientHTTP initialize http client
@@ -231,8 +234,42 @@ func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<-
 	}
 }
 
+func getInterfaceIP(interfaceName string) (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		if iface.Name == interfaceName {
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return "", err
+			}
+
+			for _, addr := range addrs {
+				ipNet, ok := addr.(*net.IPNet)
+				if ok && !ipNet.IP.IsLoopback() {
+					if ipNet.IP.To4() != nil {
+						return ipNet.IP.String(), nil
+					}
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("interface %s not found", interfaceName)
+}
+
 func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []repository.Metric, exit <-chan time.Time) {
 	client := NewClientHTTP()
+	IP, err := getInterfaceIP("eth0")
+	if err != nil {
+		log.Error(err)
+	} else {
+		client.IP = IP
+	}
+
 	for m := range report {
 		headers := make(map[string]string)
 
@@ -266,6 +303,9 @@ func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []r
 		if hash != nil {
 			headers["HashSHA256"] = *hash
 		}
+		if client.IP != "" {
+			headers["X-Real-IP"] = client.IP
+		}
 		headers["Content-Type"] = "application/json"
 		headers["Content-Encoding"] = "gzip"
 
@@ -287,7 +327,7 @@ func requestPost(client *resty.Client, header map[string]string, body []byte, ur
 
 	}
 	if resp.StatusCode() != 200 {
-		return errors.New("answer result is not correct")
+		return errors.New("answer result is not correct status code=" + strconv.Itoa(resp.StatusCode()))
 
 	}
 	return nil
