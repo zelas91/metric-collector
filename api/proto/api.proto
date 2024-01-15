@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package gen;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "api/gen";
+
+message Metric {
+  string id = 1;                              // имя метрики
+  string m_type = 2;                          // параметр, принимающий значение gauge или counter
+  int64 delta = 3;                            // значение метрики в случае передачи counter
+  double value = 4;                           // значение метрики в случае передачи gauge
+}
+service Metrics {
+  rpc AddMetrics(Metric) returns (google.protobuf.Empty);
+}
