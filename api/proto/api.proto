@@ -12,6 +12,13 @@ message Metric {
   int64 delta = 3;                            // значение метрики в случае передачи counter
   double value = 4;                           // значение метрики в случае передачи gauge
 }
+message ByteArray {
+  bytes data = 1;
+}
+message MetricArray {
+  repeated Metric metrics = 1;
+}
+
 service Metrics {
-  rpc AddMetrics(Metric) returns (google.protobuf.Empty);
+  rpc AddMetrics(ByteArray) returns (google.protobuf.Empty);
 }

@@ -2,23 +2,59 @@ package main
 
 import (
 	"context"
-	"github.com/zelas91/metric-collector/internal/logger"
-	"github.com/zelas91/metric-collector/internal/server"
-	"os"
-	"os/signal"
-	"syscall"
+	"fmt"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/empty"
+	pb "github.com/zelas91/metric-collector/api/gen"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"net"
 )
 
-func main() {
-	cfg := NewConfig()
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	_ = cancel
-	server.Run(ctx, cfg)
-	<-ctx.Done()
-	stop(ctx)
+//func main() {
+//	cfg := NewConfig()
+//	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+//	_ = cancel
+//	server.Run(ctx, cfg)
+//	<-ctx.Done()
+//	stop(ctx)
+//}
+//func stop(ctx context.Context) {
+//	server.Shutdown(ctx)
+//	logger.Shutdown()
+//	os.Exit(0)
+//}
+
+type ServerGRPC struct {
+	pb.UnimplementedMetricsServer
 }
-func stop(ctx context.Context) {
-	server.Shutdown(ctx)
-	logger.Shutdown()
-	os.Exit(0)
+
+func (s *ServerGRPC) AddMetrics(ctx context.Context, in *pb.ByteArray) (*empty.Empty, error) {
+	data := in.GetData()
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		fmt.Println(md)
+	}
+	var metrics pb.MetricArray
+	fmt.Println(proto.Unmarshal(data, &metrics))
+	fmt.Println(metrics)
+	return &empty.Empty{}, nil
+}
+
+func main() {
+	// определяем порт для сервера
+	listen, err := net.Listen("tcp", ":3200")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// создаём gRPC-сервер без зарегистрированной службы
+	s := grpc.NewServer()
+	// регистрируем сервис
+	pb.RegisterMetricsServer(s, &ServerGRPC{})
+
+	fmt.Println("Сервер gRPC начал работу")
+	// получаем запрос gRPC
+	if err := s.Serve(listen); err != nil {
+		log.Fatal(err)
+	}
 }

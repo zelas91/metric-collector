@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
-	"net"
 	"strconv"
 	"time"
 
@@ -234,36 +233,9 @@ func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<-
 	}
 }
 
-func getInterfaceIP(interfaceName string) (string, error) {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return "", err
-	}
-
-	for _, iface := range interfaces {
-		if iface.Name == interfaceName {
-			addrs, err := iface.Addrs()
-			if err != nil {
-				return "", err
-			}
-
-			for _, addr := range addrs {
-				ipNet, ok := addr.(*net.IPNet)
-				if ok && !ipNet.IP.IsLoopback() {
-					if ipNet.IP.To4() != nil {
-						return ipNet.IP.String(), nil
-					}
-				}
-			}
-		}
-	}
-
-	return "", fmt.Errorf("interface %s not found", interfaceName)
-}
-
 func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []repository.Metric, exit <-chan time.Time) {
 	client := NewClientHTTP()
-	IP, err := getInterfaceIP("eth0")
+	IP, err := utils.GetInterfaceIP("eth0")
 	if err != nil {
 		log.Error(err)
 	} else {
@@ -318,6 +290,7 @@ func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []r
 
 	}
 }
+
 func requestPost(client *resty.Client, header map[string]string, body []byte, url string) error {
 	resp, err := client.R().SetHeaders(header).
 		SetBody(body).

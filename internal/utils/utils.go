@@ -36,3 +36,29 @@ func GetSubnet(subnet string) (*net.IPNet, bool) {
 	}
 	return network, true
 }
+func GetInterfaceIP(interfaceName string) (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+
+	for _, iface := range interfaces {
+		if iface.Name == interfaceName {
+			addrs, err := iface.Addrs()
+			if err != nil {
+				return "", err
+			}
+
+			for _, addr := range addrs {
+				ipNet, ok := addr.(*net.IPNet)
+				if ok && !ipNet.IP.IsLoopback() {
+					if ipNet.IP.To4() != nil {
+						return ipNet.IP.String(), nil
+					}
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("interface %s not found", interfaceName)
+}
