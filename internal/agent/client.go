@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/zelas91/metric-collector/internal/agent/grpc"
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
 	"strconv"
 	"time"
@@ -178,7 +179,7 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 	updChan := make(chan []repository.Metric, 64)
 
 	for w := 0; w < rateLimit; w++ {
-		go updateMetrics(baseURL, key, pubKey, updChan, tickerReport.C)
+		go grpc.UpdateMetricsGRPC(baseURL, key, pubKey, updChan, tickerReport.C)
 	}
 	go func() {
 		for {

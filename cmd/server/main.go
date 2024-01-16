@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	pb "github.com/zelas91/metric-collector/api/gen"
 	"google.golang.org/grpc"
+	_ "google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/metadata"
 	"net"
 )
@@ -29,15 +30,17 @@ type ServerGRPC struct {
 	pb.UnimplementedMetricsServer
 }
 
-func (s *ServerGRPC) AddMetrics(ctx context.Context, in *pb.ByteArray) (*empty.Empty, error) {
-	data := in.GetData()
+func (s *ServerGRPC) AddMetrics(ctx context.Context, in *pb.MetricArray) (*empty.Empty, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		fmt.Println(md)
 	}
-	var metrics pb.MetricArray
-	fmt.Println(proto.Unmarshal(data, &metrics))
-	fmt.Println(metrics)
+	b, err := proto.Marshal(in)
+	if err != nil {
+		log.Errorf("PZDS MARSHAL ")
+	}
+
+	fmt.Println(len(b))
 	return &empty.Empty{}, nil
 }
 
