@@ -2,20 +2,20 @@ package grpc
 
 import (
 	"context"
-	"crypto/rsa"
+	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	pb "github.com/zelas91/metric-collector/api/gen"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/types"
 	"github.com/zelas91/metric-collector/internal/utils"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/encoding/gzip"
 	"google.golang.org/grpc/metadata"
-	"time"
+	"os"
 )
 
 var (
@@ -27,44 +27,26 @@ type ClientGRPC struct {
 	IP  string
 }
 
-func HashCalcInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-	start := time.Now()
-
-	// вызываем RPC-метод
-	in, ok := req.(*pb.MetricArray)
-	if ok {
-		fmt.Println("OK")
-	}
-	b, err := proto.Marshal(in)
+func getCredential(certPath string) (credentials.TransportCredentials, error) {
+	caCert, err := os.ReadFile(certPath)
 	if err != nil {
-		log.Errorf("PZDS MARSHAL ")
+		return nil, fmt.Errorf("could not read CA certificate: %w", err)
 	}
 
-	fmt.Println(len(b))
-	err = invoker(ctx, method, req, reply, cc, opts...)
-	// выполняем действия после вызова метода\
-	in, ok = req.(*pb.MetricArray)
-	if ok {
-		fmt.Println("OK2")
+	caCertPool := x509.NewCertPool()
+	if ok := caCertPool.AppendCertsFromPEM(caCert); ok {
+		creds := credentials.NewClientTLSFromCert(caCertPool, "")
+		return creds, nil
 	}
-	b, err = proto.Marshal(in)
-	if err != nil {
-		log.Errorf("PZDS MARSHAL ")
-	}
-
-	fmt.Println(len(b))
-	if err != nil {
-		log.Errorf("[ERROR] %s,%v", method, err)
-	} else {
-		log.Errorf("[INFO] %s,%v", method, time.Since(start))
-	}
-
-	return err
+	return nil, errors.New("get cert error")
 }
-
-func NewClientGRPC(addr string) *ClientGRPC {
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(HashCalcInterceptor),
+func NewClientGRPC(baseURL, certPath string) *ClientGRPC {
+	creds, err := getCredential(certPath)
+	if err != nil {
+		log.Errorf("get cert %v", err)
+		creds = insecure.NewCredentials()
+	}
+	conn, err := grpc.Dial(baseURL, grpc.WithTransportCredentials(creds),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
 	if err != nil {
 		log.Fatal(err)
@@ -96,69 +78,31 @@ func convertArrayMetricsToArrayMetricsGRPC(metrics []repository.Metric) (*pb.Met
 		Metrics: metricsGRPC,
 	}, nil
 }
-func UpdateMetricsGRPC(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []repository.Metric, exit <-chan time.Time) {
-
-	client := NewClientGRPC("")
-	//IP, err := getInterfaceIP("eth0")
-	//if err != nil {
-	//	log.Error(err)
-	//} else {
-	//	client.IP = IP
-	//}
+func UpdateMetricsGRPC(baseURL, certPath string, report <-chan []repository.Metric) {
+	client := NewClientGRPC(baseURL, certPath)
+	IP, err := utils.GetInterfaceIP("eth0")
+	if err != nil {
+		log.Error(err)
+	} else {
+		client.IP = IP
+	}
 
 	for m := range report {
-		headers := make(map[string]string)
+
 		arrayMetrics, err := convertArrayMetricsToArrayMetricsGRPC(m)
 		if err != nil {
 			log.Errorf("error convert metrics to GRPC %v", err)
 			continue
 		}
-
-		body, err := proto.Marshal(arrayMetrics)
-		if err != nil {
-			log.Errorf("update metrics marshal err :%v", err)
-			continue
+		headers := make(map[string]string)
+		if client.IP != "" {
+			headers["X-Real-IP"] = client.IP
 		}
-		log.Info(len(body))
-
-		//body, err = gzipCompress(body)
-		//if err != nil {
-		//	log.Errorf("error compress body %v", err)
-		//	continue
-		//}
-		//
-		//body, err = crypto.Encrypt(pubKey, body)
-		//if err != nil {
-		//	log.Errorf("encrypt err: %v", err)
-		//	continue
-		//}
-		//hash, err := utils.GenerateHash(body, key)
-		//
-		//if err != nil {
-		//	if !errors.Is(err, utils.ErrInvalidKey) {
-		//		log.Errorf("update metrics genetate hash err:%v", err)
-		//		continue
-		//	}
-		//	log.Errorf("Invalid hash key")
-		//}
-		//
-		//if hash != nil {
-		//	headers["HashSHA256"] = *hash
-		//}
-		////if client.IP != "" {
-		////	headers["X-Real-IP"] = client.IP
-		////}
-		headers["Content-Type"] = "application/json"
-		headers["Content-Encoding"] = "gzip"
-
-		//if err = requestPost(client.client, headers, body, baseURL); err != nil {
-		//	r := retryUpdateMetrics(requestPost, exit)
-		//	if err = r(client.client, headers, body, baseURL); err != nil {
-		//		log.Errorf("retry err: %v", err)
-		//	}
-		//}
 		md := metadata.New(headers)
 		ctx := metadata.NewOutgoingContext(context.Background(), md)
-		_, _ = client.rpc.AddMetrics(ctx, arrayMetrics)
+		if _, err = client.rpc.AddMetrics(ctx, arrayMetrics); err != nil {
+			log.Errorf("add metrics err %v", err)
+		}
+
 	}
 }

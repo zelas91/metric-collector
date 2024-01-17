@@ -29,6 +29,7 @@ var (
 	buildCommit    = "N/A"
 	cryptoKey      *string
 	jsonCfg        *string
+	mode           *bool
 )
 
 func init() {
@@ -39,6 +40,7 @@ func init() {
 	rateLimit = flag.Int("l", 1, "rate_limit")
 	cryptoKey = flag.String("crypto-key", defaultCryptoKey, "public key")
 	jsonCfg = flag.String("c", "", "config json")
+	mode = flag.Bool("mode http or grpc", false, "default http")
 	printVersion()
 }
 
@@ -50,6 +52,7 @@ type Config struct {
 	RateLimit      *int   `env:"RATE_LIMIT"`
 	CryptoCertPath string `env:"CRYPTO_KEY" json:"crypto_key"`
 	JSONConfig     string `env:"CONFIG"`
+	Mode           *bool  `env:"MODE"`
 }
 
 func NewConfig() *Config {
@@ -74,6 +77,9 @@ func NewConfig() *Config {
 	}
 	if cfg.RateLimit == nil {
 		cfg.RateLimit = rateLimit
+	}
+	if cfg.Mode == nil {
+		cfg.Mode = mode
 	}
 	if cfg.CryptoCertPath == "" {
 		cfg.CryptoCertPath = *cryptoKey
@@ -102,7 +108,7 @@ func NewConfig() *Config {
 			}
 		}
 	}
-	cfg.BaseURL = fmt.Sprintf("http://%s/updates", cfg.BaseURL)
+
 	return &cfg
 }
 func printVersion() {
