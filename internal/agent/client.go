@@ -179,11 +179,9 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 	updChan := make(chan []repository.Metric, 64)
 
 	for w := 0; w < rateLimit; w++ {
-		log.Info("RUN MODE ", mode)
 		if mode {
 			go grpc.UpdateMetricsGRPC(baseURL, certPath, updChan)
 		} else {
-
 			go updateMetrics(fmt.Sprintf("http://%s/updates", baseURL), key, crypto.LoadPublicKey(certPath), updChan, tickerReport.C)
 		}
 	}
