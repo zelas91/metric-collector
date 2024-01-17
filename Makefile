@@ -33,4 +33,4 @@ build-all: clean
 		$(foreach GOARCH,$(ARCH),\
 			GOOS=$(GOOS) GOARCH=$(GOARCH) make build-server build-agent;))
 generate:
-	protoc -I api/proto --go_out=./api/gen --go_opt=paths=source_relative --go-grpc_out=./api/gen --go-grpc_opt=paths=source_relative api.proto
+	protoc -I api/proto --go_out=internal/api --go_opt=paths=source_relative --go-grpc_out=internal/api --go-grpc_opt=paths=source_relative api.proto
