@@ -1,11 +1,10 @@
-package grpc_controller
+package controller
 
 import (
 	"context"
 	"errors"
 	"github.com/golang/protobuf/ptypes/empty"
 	pb "github.com/zelas91/metric-collector/internal/api"
-	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/server/types"
@@ -14,10 +13,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"net"
-)
-
-var (
-	log = logger.New()
 )
 
 type ServerGRPC struct {

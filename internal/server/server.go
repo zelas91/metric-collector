@@ -11,7 +11,6 @@ import (
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server/config"
 	"github.com/zelas91/metric-collector/internal/server/controller"
-	"github.com/zelas91/metric-collector/internal/server/grpc_controller"
 	"github.com/zelas91/metric-collector/internal/server/repository"
 	"github.com/zelas91/metric-collector/internal/server/service"
 	"github.com/zelas91/metric-collector/internal/utils"
@@ -64,7 +63,7 @@ func Run(ctx context.Context, cfg *config.Config) {
 			log.Fatalf("ListenAndServe %v", err)
 		}
 	}()
-	servGRPC := grpc_controller.NewServerGRPC(service)
+	servGRPC := controller.NewServerGRPC(service)
 	s, err := startGRPC(servGRPC, cfg)
 	if err != nil {
 		log.Errorf("start grpc server err %v", err)
@@ -92,7 +91,7 @@ func Shutdown(ctx context.Context) {
 	log.Info("server stop")
 }
 
-func startGRPC(serv *grpc_controller.ServerGRPC, cfg *config.Config) (*grpc.Server, error) {
+func startGRPC(serv *controller.ServerGRPC, cfg *config.Config) (*grpc.Server, error) {
 	listen, err := net.Listen("tcp", cfg.AddrGRPC)
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
@@ -108,7 +107,7 @@ func startGRPC(serv *grpc_controller.ServerGRPC, cfg *config.Config) (*grpc.Serv
 		}
 	}
 
-	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(grpc_controller.TrustedSubnet(network)))
+	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(controller.TrustedSubnet(network)))
 	// регистрируем сервис
 	pb.RegisterMetricsServer(s, serv)
 
