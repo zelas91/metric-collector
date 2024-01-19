@@ -42,12 +42,13 @@ func Run(ctx context.Context, cfg *config.Config) {
 	if cfg.Database != nil && *cfg.Database != "" {
 		repo = repository.NewDBStorage(ctx, *cfg.Database)
 	}
-	if repo == nil {
+	if repo == nil && (cfg.Restore == nil || cfg.FilePath == nil) {
 		repo = repository.NewMemStorage()
 	}
-	//if repo == nil {
-	//	repo = repository.NewFileStorage(ctx, cfg)
-	//}
+	if repo == nil {
+		repo = repository.NewFileStorage(ctx, cfg)
+	}
+
 	service := service.NewMemService(ctx, repo, cfg)
 	metric := controller.NewMetricHandler(service)
 
