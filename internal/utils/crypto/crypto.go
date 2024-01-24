@@ -34,13 +34,17 @@ func LoadPrivateKey(path string) *rsa.PrivateKey {
 		log.Errorf("error read file private key = %s  err: %v", path, err)
 		return nil
 	}
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		log.Errorf("parse private key err=%v", err)
 		return nil
 	}
-
-	return privateKey
+	pvKey, ok := privateKey.(*rsa.PrivateKey)
+	if !ok {
+		log.Errorf("cast key err (rsq.PrivateKey)")
+		return nil
+	}
+	return pvKey
 }
 
 func loadBlock(path string) (*pem.Block, error) {

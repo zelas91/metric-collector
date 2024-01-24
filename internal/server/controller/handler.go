@@ -4,10 +4,16 @@ import (
 	"crypto/rsa"
 	"github.com/gin-gonic/gin"
 	"github.com/zelas91/metric-collector/internal/server/controller/middleware"
+	"github.com/zelas91/metric-collector/internal/utils"
 )
 
-func (h *MetricHandler) InitRoutes(hashKey *string, key *rsa.PrivateKey) *gin.Engine {
+func (h *MetricHandler) InitRoutes(hashKey *string, key *rsa.PrivateKey, subnet string) *gin.Engine {
 	router := gin.New()
+	if subnet != "" {
+		if network, ok := utils.GetSubnet(subnet); ok {
+			router.Use(middleware.TrustedSubnet(network))
+		}
+	}
 
 	router.Use(middleware.HashCheck(hashKey), middleware.WithLogging, middleware.Decrypt(key),
 		middleware.GzipCompress, middleware.GzipDecompress, middleware.Timeout, middleware.CalculateHash(hashKey))

@@ -55,7 +55,7 @@ func TestAddMetric(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			w := httptest.NewRecorder()
-			h := test.handler.InitRoutes(nil, nil)
+			h := test.handler.InitRoutes(nil, nil, "")
 
 			h.ServeHTTP(w, request)
 			res := w.Result()
@@ -101,7 +101,7 @@ func TestGetMetric(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.url, nil)
 			w := httptest.NewRecorder()
 
-			h := handler.InitRoutes(nil, nil)
+			h := handler.InitRoutes(nil, nil, "")
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()
@@ -174,7 +174,7 @@ func TestAddMetricJSON(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, strings.NewReader(string(body)))
 			request.Header = test.header
 			w := httptest.NewRecorder()
-			h := test.handler.InitRoutes(nil, nil)
+			h := test.handler.InitRoutes(nil, nil, "")
 
 			h.ServeHTTP(w, request)
 			res := w.Result()
@@ -247,7 +247,7 @@ func TestGetMetricJSON(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, strings.NewReader(string(body)))
 			request.Header = test.header
 			w := httptest.NewRecorder()
-			h := handler.InitRoutes(nil, nil)
+			h := handler.InitRoutes(nil, nil, "")
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()
@@ -298,7 +298,7 @@ func BenchmarkAddMetricJSONFile(b *testing.B) {
 	interval := 0
 	h := NewMetricHandler(service.NewMemService(context.Background(),
 		repository.NewFileStorage(context.TODO(), &config.Config{FilePath: &file,
-			StoreInterval: &interval}), &config.Config{})).InitRoutes(nil, nil)
+			StoreInterval: &interval}), &config.Config{})).InitRoutes(nil, nil, "")
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -344,7 +344,7 @@ func BenchmarkAddMetricJSON(b *testing.B) {
 	mem := repository.NewMemStorage()
 	w := httptest.NewRecorder()
 	h := NewMetricHandler(service.NewMemService(context.Background(),
-		mem, &config.Config{})).InitRoutes(nil, nil)
+		mem, &config.Config{})).InitRoutes(nil, nil, "")
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
@@ -389,7 +389,7 @@ func TestGetMetrics(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.url, nil)
 			//request.Header = test.header
 			w := httptest.NewRecorder()
-			h := handler.InitRoutes(nil, nil)
+			h := handler.InitRoutes(nil, nil, "")
 			h.ServeHTTP(w, request)
 			res := w.Result()
 			defer res.Body.Close()

@@ -8,7 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/zelas91/metric-collector/internal/agent/grpc"
 	"github.com/zelas91/metric-collector/internal/utils/crypto"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -24,6 +26,7 @@ var (
 
 type ClientHTTP struct {
 	client *resty.Client
+	IP     string
 }
 
 // NewClientHTTP initialize http client
@@ -165,7 +168,7 @@ func readStats(s *Stats, ch chan<- []repository.Metric) {
 }
 
 // Run start goroutine to call the metrics update.
-func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, pubKey *rsa.PublicKey) {
+func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key string, rateLimit int, certPath string, mode bool) {
 	s := NewStats()
 
 	tickerReport := time.NewTicker(time.Duration(reportInterval) * time.Second)
@@ -176,7 +179,11 @@ func Run(ctx context.Context, pollInterval, reportInterval int, baseURL, key str
 	updChan := make(chan []repository.Metric, 64)
 
 	for w := 0; w < rateLimit; w++ {
-		go updateMetrics(baseURL, key, pubKey, updChan, tickerReport.C)
+		if mode {
+			go grpc.UpdateMetricsGRPC(baseURL, certPath, updChan)
+		} else {
+			go updateMetrics(fmt.Sprintf("http://%s/updates", baseURL), key, crypto.LoadPublicKey(certPath), updChan, tickerReport.C)
+		}
 	}
 	go func() {
 		for {
@@ -233,6 +240,13 @@ func copyChannel(ctx context.Context, src <-chan []repository.Metric, dst chan<-
 
 func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []repository.Metric, exit <-chan time.Time) {
 	client := NewClientHTTP()
+	IP, err := utils.GetInterfaceIP("eth0")
+	if err != nil {
+		log.Error(err)
+	} else {
+		client.IP = IP
+	}
+
 	for m := range report {
 		headers := make(map[string]string)
 
@@ -266,6 +280,9 @@ func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []r
 		if hash != nil {
 			headers["HashSHA256"] = *hash
 		}
+		if client.IP != "" {
+			headers["X-Real-IP"] = client.IP
+		}
 		headers["Content-Type"] = "application/json"
 		headers["Content-Encoding"] = "gzip"
 
@@ -278,6 +295,7 @@ func updateMetrics(baseURL, key string, pubKey *rsa.PublicKey, report <-chan []r
 
 	}
 }
+
 func requestPost(client *resty.Client, header map[string]string, body []byte, url string) error {
 	resp, err := client.R().SetHeaders(header).
 		SetBody(body).
@@ -287,7 +305,7 @@ func requestPost(client *resty.Client, header map[string]string, body []byte, ur
 
 	}
 	if resp.StatusCode() != 200 {
-		return errors.New("answer result is not correct")
+		return errors.New("answer result is not correct status code=" + strconv.Itoa(resp.StatusCode()))
 
 	}
 	return nil

@@ -32,6 +32,9 @@ var (
 	buildCommit   = "N/A"
 	cryptoKey     *string
 	jsonCfg       *string
+	trustedSubnet *string
+	addrGRPC      *string
+	cryptoCert    *string
 )
 
 func init() {
@@ -43,6 +46,9 @@ func init() {
 	key = flag.String("k", "", "key hash")
 	cryptoKey = flag.String("crypto-key", defaultCryptoKey, "private key")
 	jsonCfg = flag.String("c", "", "config json")
+	trustedSubnet = flag.String("t", "", "cidr ip")
+	addrGRPC = flag.String("grpc-addr", "localhost:3200", "default localhost:3200")
+	cryptoCert = flag.String("cert-key", "", "pub key")
 	printVersion()
 }
 
@@ -59,7 +65,10 @@ func NewConfig() *config.Config {
 	}
 	if cfg.StoreInterval == nil {
 		cfg.StoreInterval = storeInterval
+	}
 
+	if cfg.AddrGRPC == "" {
+		cfg.AddrGRPC = *addrGRPC
 	}
 
 	if cfg.Restore == nil {
@@ -79,8 +88,14 @@ func NewConfig() *config.Config {
 	if cfg.CryptoCertPath == "" {
 		cfg.CryptoCertPath = *cryptoKey
 	}
-	if cfg.JSONConfig != "" {
+	if cfg.CertPath == "" {
+		cfg.CertPath = *cryptoCert
+	}
+	if cfg.JSONConfig == "" {
 		cfg.JSONConfig = *jsonCfg
+	}
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = *trustedSubnet
 	}
 	if cfg.JSONConfig != "" {
 		if data, err := os.ReadFile(cfg.JSONConfig); err == nil {
@@ -110,6 +125,9 @@ func NewConfig() *config.Config {
 			}
 			if *cfg.StoreInterval == defaultStoreInterval {
 				cfg.StoreInterval = configJSON.StoreInterval
+			}
+			if cfg.TrustedSubnet == "" {
+				cfg.TrustedSubnet = configJSON.TrustedSubnet
 			}
 		}
 	}

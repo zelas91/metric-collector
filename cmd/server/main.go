@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zelas91/metric-collector/internal/logger"
 	"github.com/zelas91/metric-collector/internal/server"
+	_ "google.golang.org/grpc/encoding/gzip"
 	"os"
 	"os/signal"
 	"syscall"
